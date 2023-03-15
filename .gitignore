@@ -1,0 +1,16 @@
+# Impostazioni VSCode
+.vscode
+# File ausiliari build
+build
+# Risultato build
+dist
+# Ambiene virtuale Python e pycache
+gabc_venv
+*__pycache__*
+# Appunti
+todo.md
+# File temporanei relativi alla compilazione
+resources/anteprima*
+# Unit Ttest separato
+test*
+anteprima*
