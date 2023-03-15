@@ -2,45 +2,49 @@
 
 _(C) 2023 Paolo Turrini_
 
-## Descrizione
+## Description
 
-Interfaccia grafica ed editor di testo per il linguaggio GABC e la compilazione di partiture di canti gregoriani tramite `LuaLaTeX + Gregorio`.
+Graphical interface and text editor for GABC language and typesetting of gregorian chant using `LuaLaTeX + Gregorio`.
 
-## Prerequisiti: distribuzione LaTeX
+## Prerequisites: LaTeX distribution
 
-GABC Editor è sviluppato su Windows 10. Al momento non è testato su altri sistemi operativi.
-Occorre avere già installato una distribuzione LaTeX e la libreria Gregorio. Le due distribuzioni LaTeX più comuni sono **TexLive** e **MikTeX**. Si raccomanda MikTeX perché più semplice e veloce come installazione, utilizzo e gestione dei pacchetti (soprattutto per utenti meno esperti).
+GABC Editor is being developed on Windows 10. It has not yet been tested on other OSes.
+A previously installed LaTeX distribution and the Gregorio library are required. The two most common LaTeX distributions are **TexLive** and **MikTeX**. MikTeX is recommended for its easier and faster setup, usage and library management (especially for inexperienced users).
 
-Assicurarsi di avere spazio sufficiente su disco (1,2 GB minimo, circa 5 GB se si installano tutti i pacchetti). Ai fini di questa applicazione è sufficiente un'installazione LaTeX di base più il pacchetto `gregoriotex` (meno di 70 MB) e pochi altri pacchetti leggeri, che dovrebbero essere inclusi automaticamente nell'installazione (se no, si possono installare in seguito).
+Please ensure you have enough disk space for the LaTeX installation (1.2 GB minimum, or about 5 GB for a full installation).
+A base LaTeX installation plus the `gregoriotex` package (less than 70 MB) and a few other lightweight libraries which should be included in the installation (if not, they can also be downloaded later) should be enough for this application to work.
 
 ### MikTeX
 
-1. Seguire le [istruzioni per installare MikTeX](https://miktex.org/howto/install-miktex) (_tl;dr_: scaricare e avviare l'installer). Si possono lasciare le opzioni di default.
-2. Dopo l'installazione, aprire la console MikTeX (se c'è la scelta fra modalità utente e amministratore, scegliere amministratore).
-3. Selezionare la scheda _Packages_ (Pacchetti) e controllare se nell'elenco è presente `gregoriotex`. Se non c'è, provare ad aggiornare l'elenco (menu _Tasks_ -> _Refresh file name database_).
-4. Selezionare il pacchetto `gregoriotex` dall'elenco e installarlo (pulsante col simbolo +).
+1. Follow the [MikTeX installation instructions](https://miktex.org/howto/install-miktex) (_tl;dr_: download and run the installer). You can keep the default options.
+2. After installing MikTeX, open the MikTeX console (if there's a choice between User and Administrator mode, choose Administrator).
+3. Select the _Packages_ tab and look for `gregoriotex`. If it's not there, try updating the package list (menu _Tasks_ -> _Refresh file name database_).
+4. Select the `gregoriotex` package from the list and install it (with the + button).
 
 ### TexLive
 
-1. Seguire le [istruzioni per installare TeXLive](https://www.tug.org/texlive/windows.html) (_tl;dr_: scaricare e avviare l'installer). Si possono lasciare le opzioni di default.
-2. [Se non è già presente, installare il pacchetto `gregoriotex`.]
+1. Follow the [TeXLive installation instructions](https://www.tug.org/texlive/windows.html) (_tl;dr_: download and run the installer). You can keep the default options.
+2. [Install the `gregoriotex` package if not present.]
 
-## Installazione
+## Installation
 
 _TODO_
 
-## Utilizzo
+## Usage
 
-Scrivere il codice GABC e premere il pulsante Compila (o i tasti `Ctrl + P`). La compilazione può richiedere alcuni secondi; lo spartito apparirà nell'anteprima sulla destra.
+Write the GABC code and press the Compile button (shortcut: `Ctrl + P`). The compilation process may take a few seconds; the score will appear in the preview on the left side.
 
-## Licenza
+## License
 
-Licenza MIT
-(vedi LICENSE.txt)
+MIT License
+(see LICENSE.txt)
 
-## Funzionalità in sviluppo
+## Features in progress
 
-- Gestione file .gabc (anche multipli)
-- Impostazioni e scelta del layout della pagina compilata
-- Esportazione come immagine
-- Mappa caratteri speciali
+- Settings for the layout of the compiled page
+- Export as image and other formats
+- Special characters map
+
+## Wishlist
+
+- Graphical WYSIWYG editor for GABC (beside the existing text editor)
