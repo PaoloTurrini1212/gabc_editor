@@ -20,6 +20,8 @@ class PdfPreview(QWidget):
         8: ("150%", QPdfView.ZoomMode.Custom, 1.5),
         9: ("200%", QPdfView.ZoomMode.Custom, 2),
     }
+    currentZoomOption = 0
+    currentPage = 1
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -50,8 +52,14 @@ class PdfPreview(QWidget):
         self.zoom_selector.addItems([self.zoomOptions[i][0] for i in self.zoomOptions])
         self.zoom_selector.setCurrentText("Adatta alla larghezza")
         self.zoom_selector.currentIndexChanged.connect(self.setZoom)
-        self.toolbar.addWidget(QLabel("Zoom "))
+        self.zoom_in_btn = QPushButton("\U0001f50D+")
+        self.zoom_out_btn = QPushButton("\U0001f50D-")
+        self.zoom_in_btn.clicked.connect(self.zoomIn)
+        self.zoom_out_btn.clicked.connect(self.zoomOut)
         self.toolbar.addWidget(self.zoom_selector)
+        self.toolbar.addWidget(self.zoom_out_btn)
+        self.toolbar.addWidget(self.zoom_in_btn)
+        self.toolbar.addSeparator()
 
         #self.toolbar.addSeparator()
 
@@ -59,6 +67,7 @@ class PdfPreview(QWidget):
         self.prev_page_btn = QPushButton(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowBack), "", self.toolbar)
         self.next_page_btn = QPushButton(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowForward), "", self.toolbar)
         self.page_indicator = QLabel("1 / 1", self.toolbar)
+        self.toolbar.addWidget(QLabel("Pagina "))
         self.toolbar.addWidget(self.prev_page_btn)
         self.toolbar.addWidget(self.page_indicator)
         self.toolbar.addWidget(self.next_page_btn)
@@ -69,13 +78,16 @@ class PdfPreview(QWidget):
         self.layout().addWidget(self.pdf_view)
 
         # Style
-        self.setStyleSheet("""
-        QComboBox#zoom_selector { padding: 100px }
-        QPushButton { border: none; margin-left: 10px; margin-right: 10px; }
-        """)
+        self.setStyleSheet(
+        """
+        QComboBox { padding: 2px; }
+        QPushButton, QLabel { border: none; margin: 2px; padding: 2px; padding-top: 3px; padding-bottom: 2px; border: 1px solid transparent; }
+        QPushButton:hover { border: 1px solid #348cfa; background-color: #e4f3ff }
+        QPushButton:pressed { padding: 1px -1px -1px 1px; background-color: #add8e6 }
+        """
+        )
     
     def loadPdf(self, pdf):
-        #print(relPath(pdf))
         self.pdf_document.load(pdf)
     
     def clearPdf(self):
@@ -92,7 +104,28 @@ class PdfPreview(QWidget):
         return img_with_white_bg
     
     def setZoom(self, zoomSelection):
-        zoom = self.zoomOptions[zoomSelection]
+        self.currentZoomOption = zoomSelection
+        zoom = self.zoomOptions[self.currentZoomOption]
         self.pdf_view.setZoomMode(zoom[1])
         self.pdf_view.setZoomFactor(zoom[2])
+        pass
+
+    def zoomIn(self):
+        newZoom = 0
+        if self.pdf_view.zoomMode() != QPdfView.ZoomMode.Custom:
+            newZoom = 6
+        else:
+            newZoom = min(self.currentZoomOption+1, len(self.zoomOptions)-1)
+        self.setZoom(newZoom)
+        self.zoom_selector.setCurrentIndex(newZoom)
+        pass
+    
+    def zoomOut(self):
+        newZoom = 0
+        if self.pdf_view.zoomMode() != QPdfView.ZoomMode.Custom:
+            newZoom = 6
+        else:
+            newZoom = max(self.currentZoomOption-1, 2)
+        self.setZoom(newZoom)
+        self.zoom_selector.setCurrentIndex(newZoom)
         pass
