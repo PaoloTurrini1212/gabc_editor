@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QDialog, QFileDialog, QDialogButtonBox, QVBoxLayout, QLabel, QLineEdit, QPushButton
+from PySide6.QtWidgets import QDialog, QFileDialog, QDialogButtonBox, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton
 from PySide6.QtCore import QSettings
 
 class SettingsDialog(QDialog):
@@ -14,19 +14,22 @@ class SettingsDialog(QDialog):
                 QFileDialog.getExistingDirectory(
                     self,
                     "Seleziona cartella per il salvataggio",
-                    self.settings.value("save_path"))))
+                    self.settings.value("save_path")
+                ) or self.settings.value("save_path")))
+        row_save_path = QHBoxLayout()
+        row_save_path.addWidget(self.save_path)
+        row_save_path.addWidget(btn_save_path_browse)
 
         QBtn = QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         self.buttonBox = QDialogButtonBox(QBtn)
         self.buttonBox.accepted.connect(self.apply)
         self.buttonBox.rejected.connect(self.cancel)
 
-        self.setLayout(QVBoxLayout())
+        formLayout = QFormLayout()
+        self.setLayout(formLayout)
 
-        self.layout().addWidget(QLabel("Salva file in: "))
-        self.layout().addWidget(self.save_path)
-        self.layout().addWidget(btn_save_path_browse)
-        self.layout().addWidget(self.buttonBox)
+        formLayout.addRow("Salva file in: ",  row_save_path)
+        formLayout.addWidget(self.buttonBox)
     
     def apply(self):
         self.settings.setValue("save_path", self.save_path.text())

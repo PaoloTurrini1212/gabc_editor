@@ -11,7 +11,7 @@ def compile_preview(worker_signals: WorkerSignals, gabc):
     with open("./resources/anteprima.gabc", "w", encoding="utf-8") as file:
         file.write(gabc)
         pass
-    print("File ausiliario creato.")
+    #print("File ausiliario creato.")
 
     worker_signals.partial.emit(("Genero la struttura del documento...", None))
 
@@ -35,7 +35,7 @@ def compile_preview(worker_signals: WorkerSignals, gabc):
         for line in sub.stdout:
             worker_signals.partial.emit((None, line))
 
-    print("\nAnteprima PDF generata.")
+    #print("\nAnteprima PDF generata.")
     #print(output)
 
 def build_tex():

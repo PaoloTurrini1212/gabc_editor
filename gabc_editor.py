@@ -1,9 +1,11 @@
+# coding=utf-8
+
 from PySide6.QtWidgets import (
     QApplication,
     #QMessageBox,
 )
 from PySide6.QtCore import QTranslator, QLocale, QLibraryInfo
-from PySide6.QtCore import QCoreApplication, QSettings
+from PySide6.QtCore import QCoreApplication #, QSettings
 import sys
 #import os
 from src.gabc_window import GabcWindow
@@ -18,10 +20,8 @@ QCoreApplication.setOrganizationName("GABC Editor")
 # Imposta lingua
 translator = QTranslator(app)
 locale = QLocale.system().name()
-print("locale ", locale)
 translation_path = QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath)
-print("translation_path ", translation_path)
-translator.load(f"qt_{locale}", translation_path)
+translator.load("qt_{locale}", translation_path)
 app.installTranslator(translator)
 
 # Controlli preliminari

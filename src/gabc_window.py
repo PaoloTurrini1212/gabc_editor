@@ -145,8 +145,10 @@ class GabcWindow(QMainWindow):
         )
         export_action.setStatusTip("Esporta...")
         export_action.triggered.connect(self.export)
-
+        
         settings_action = self.addAction("Impostazioni...")
+        settings_action_icon = QIcon("resources/icona_opzioni.png")
+        settings_action.setIcon(settings_action_icon)
         settings_action.setStatusTip("Impostazioni...")
         settings_action.triggered.connect(self.open_settings)
 
@@ -229,7 +231,6 @@ class GabcWindow(QMainWindow):
         help_menu.addAction(info_action)
 
         # Toolbar
-
         self.toolbar = self.addToolBar("Strumenti")
         self.toolbar.addAction(newfile_action)
         self.toolbar.addAction(openfile_action)
@@ -238,6 +239,8 @@ class GabcWindow(QMainWindow):
         self.toolbar.addSeparator()
         self.toolbar.addAction(compile_action)
         self.toolbar.addAction(export_action)
+        self.toolbar.addSeparator()
+        self.toolbar.addAction(settings_action)
 
         self.show()
     
@@ -419,7 +422,7 @@ class GabcWindow(QMainWindow):
 
     # Esporta (con opzioni)
     def export(self, export_type):
-        print("esporta", export_type)
+        #print("esporta", export_type)
         fileName = QFileDialog.getSaveFileName(
             self, "Salva file Gabc", self.settings.value("save_path"), filter="Immagine PNG (*.png);;Immagine JPEG (*.jpg)"
         )
@@ -442,7 +445,6 @@ class GabcWindow(QMainWindow):
         pass
 
     def close_app(self):
-        print("quit")
         for i in range(self.editor_tabs.count()):
             print(i, self.editor_tabs.tabText(i))
             self.close_file(i)
