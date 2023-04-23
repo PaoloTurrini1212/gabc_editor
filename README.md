@@ -1,4 +1,4 @@
-# GABC Editor 0.1 (alpha)
+# GABC Editor 0.1.1 (alpha)
 
 _(C) 2023 Paolo Turrini_
 
@@ -48,3 +48,26 @@ MIT License
 ## Wishlist
 
 - Graphical WYSIWYG editor for GABC (beside the existing text editor)
+
+---
+
+# Version history
+
+## Pre-release
+
+### 0.1.1
+
+- (WIP) fixing file management
+- (WIP) adding settings
+- added snippets tool (left sidebar)
+- fixed zoom options in pdf preview window
+
+### 0.1.0
+Initial commit
+- main compilation function
+- gabc text editor with syntax coloring
+- log window
+- crude file management system
+- settings management (stub)
+
+---
