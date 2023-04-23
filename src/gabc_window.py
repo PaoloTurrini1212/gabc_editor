@@ -28,6 +28,7 @@ from src.latex_compile import compile_preview
 from src.pdf_preview import PdfPreview
 from src.showinfo import showinfo
 from src.settings import SettingsDialog
+from src.snippets import SnippetInsert
 
 
 # Applicazione principale
@@ -105,6 +106,13 @@ class GabcWindow(QMainWindow):
         bottom_dock = QDockWidget("Messaggi di compilazione")
         bottom_dock.setWidget(self.logger)
         self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, bottom_dock)
+
+        # TODO: sidebar con tool multipli
+        left_dock = QDockWidget("Strumenti")
+        self.char_map = SnippetInsert(left_dock)
+        self.char_map.char_selected.connect(self.insertTextInCurrentEditor)
+        left_dock.setWidget(self.char_map)
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, left_dock)
 
         # Azioni di menu e pulsanti
 
