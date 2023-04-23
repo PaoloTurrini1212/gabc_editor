@@ -1,5 +1,6 @@
-# Impostazioni VSCode
+# Impostazioni varie
 .vscode
+config.ini
 # File ausiliari build
 build
 # Risultato build
@@ -11,6 +12,7 @@ dist
 todo.md
 # File temporanei relativi alla compilazione
 resources/anteprima*
-# Unit Ttest separato
+resources/*.log
+# Unit Test separato
 test*
 anteprima*

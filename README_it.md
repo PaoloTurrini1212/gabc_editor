@@ -47,3 +47,26 @@ Licenza MIT
 ## Lista desideri
 
 - Editor grafico WYSIWYG per GABC (a fianco di quello testuale già presente)
+
+---
+
+# Storico versioni
+
+## Pre-rilascio
+
+### 0.1.1
+
+- (in corso) correzione gestione file
+- (in corso) aggiunta impostazioni
+- aggiunta strumento frammenti (barra laterale sx)
+- corretti comandi zoom in anteprima pdf
+
+### 0.1.0
+Commit iniziale
+- funzione principale di compilazione
+- editor di testo gabc con colorazione sintassi
+- finestra log
+- sistema grezzo di gestione file
+- gestione impostazioni (stub)
+
+---
