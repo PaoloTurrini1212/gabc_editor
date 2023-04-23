@@ -5,7 +5,7 @@ build
 # Risultato build
 dist
 # Ambiene virtuale Python e pycache
-gabc_venv
+*venv
 *__pycache__*
 # Appunti
 todo.md
