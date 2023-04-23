@@ -12,7 +12,7 @@ from src.settings import SettingsDialog
 from src.showinfo import showinfo
 from src.snippets import SnippetInsert
 from src.worker import Worker
-from utils import baseName, relPath  # , ROOT_PATH
+from utils import baseName, relPath
 
 
 # Applicazione principale
@@ -23,11 +23,8 @@ class GabcWindow(QMainWindow):
 
     def initUI(self):
         self.setWindowIcon(QIcon(relPath("resources/icona_greg.ico")))
-        self.resize(1000, 600)
-        self.move(100, 50) # 100, 50
-
         self.settings = QSettings(relPath("config.ini"), QSettings.Format.IniFormat)
-
+        
         self.status_font = QFontDatabase.systemFont(
             QFontDatabase.SystemFont.GeneralFont
         )
@@ -87,11 +84,12 @@ class GabcWindow(QMainWindow):
         self.setCentralWidget(self.editor_tabs)
         right_dock = QDockWidget("Anteprima PDF")
         right_dock.setWidget(self.preview_widget)
+        right_dock.setObjectName("pdf_preview")
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, right_dock)
-        self.resizeDocks([right_dock], [self.width()/2], Qt.Orientation.Horizontal)
 
         bottom_dock = QDockWidget("Messaggi di compilazione")
         bottom_dock.setWidget(self.logger)
+        bottom_dock.setObjectName("logger")
         self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, bottom_dock)
 
         # TODO: sidebar con tool multipli
@@ -99,6 +97,7 @@ class GabcWindow(QMainWindow):
         self.char_map = SnippetInsert(left_dock)
         self.char_map.char_selected.connect(self.insertTextInCurrentEditor)
         left_dock.setWidget(self.char_map)
+        left_dock.setObjectName("side_toolbar")
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, left_dock)
 
         # Azioni di menu e pulsanti
@@ -232,6 +231,7 @@ class GabcWindow(QMainWindow):
 
         # Toolbar
         self.toolbar = self.addToolBar("Strumenti")
+        self.toolbar.setObjectName("main_toolbar")
         self.toolbar.addAction(newfile_action)
         self.toolbar.addAction(openfile_action)
         self.toolbar.addAction(savefile_action)
@@ -242,6 +242,13 @@ class GabcWindow(QMainWindow):
         self.toolbar.addSeparator()
         self.toolbar.addAction(settings_action)
 
+        geometry = self.settings.value("geometry")
+        if geometry==None: geometry = self.saveGeometry()
+        self.restoreGeometry(geometry)
+        windowState = self.settings.value("windowState")
+        if windowState==None: windowState = self.saveState()
+        self.restoreState(windowState)
+        
         self.show()
     
     def getCurrentEditor(self) -> GabcEditor:
@@ -444,9 +451,14 @@ class GabcWindow(QMainWindow):
         showinfo(self)
         pass
 
-    def close_app(self):
+    def before_closing(self):
+        self.settings.setValue("geometry", self.saveGeometry())
+        self.settings.setValue("windowState", self.saveState())
         for i in range(self.editor_tabs.count()):
             print(i, self.editor_tabs.tabText(i))
             self.close_file(i)
+        pass
+
+    def close_app(self):
         QApplication.instance().quit()
         pass

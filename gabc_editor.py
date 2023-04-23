@@ -63,4 +63,5 @@ except ImportError:
 
 if __name__ == "__main__":
     w = GabcWindow()
+    app.lastWindowClosed.connect(w.before_closing)
     sys.exit(app.exec())
