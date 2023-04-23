@@ -1,34 +1,18 @@
-from PySide6.QtCore import (
-    Qt,
-    QThreadPool,
-    QSettings,
-)
-from PySide6.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QStatusBar,
-    QTabWidget,
-    QStyle,
-    QLabel,
-    QDockWidget,
-    QFileDialog,
-    QMessageBox,
-    #QSizePolicy,
-)
-from PySide6.QtGui import (
-    QIcon,
-    QFontDatabase,
-)
+from PySide6.QtCore import QSettings, QSize, Qt, QThreadPool
+from PySide6.QtGui import QColor, QFontDatabase, QIcon, QPainter, QPixmap
+from PySide6.QtWidgets import (QApplication, QDockWidget, QFileDialog, QLabel,
+                                QMainWindow, QMessageBox, QStatusBar, QStyle,
+                                QTabWidget)
 
-from utils import relPath, baseName #, ROOT_PATH
 from src.editor import GabcEditor
-from src.logview import LogView
-from src.worker import Worker
 from src.latex_compile import compile_preview
+from src.logview import LogView
 from src.pdf_preview import PdfPreview
-from src.showinfo import showinfo
 from src.settings import SettingsDialog
+from src.showinfo import showinfo
 from src.snippets import SnippetInsert
+from src.worker import Worker
+from utils import baseName, relPath  # , ROOT_PATH
 
 
 # Applicazione principale
@@ -76,7 +60,9 @@ class GabcWindow(QMainWindow):
         self.editor_tabs.tabCloseRequested.connect(self.close_file)
 
         self.new_files_counter = 1
-        self.editor_tabs.addTab(GabcEditor(self, file="", font=self.editor_font), f"nuovo{self.new_files_counter}.gabc")
+        # first_tab = GabcEditor(self, file="", font=self.editor_font)
+        # self.editor_tabs.addTab(first_tab, f"nuovo{self.new_files_counter}.gabc")
+        # first_tab.modificationChanged.connect(self.updateWindowTitle)
         self.setWindowTitle(f"nuovo{self.new_files_counter}.gabc[*]")
         self.getCurrentEditor().cursorPositionChanged.connect(self.updateLineMsg)
 
@@ -94,7 +80,7 @@ class GabcWindow(QMainWindow):
         # Anteprima
 
         self.preview_widget = PdfPreview(self)
-        self.preview_widget.loadPdf("resources/anteprima.pdf")
+        #self.preview_widget.loadPdf("resources/anteprima.pdf")
 
         # Layout
 
@@ -103,6 +89,7 @@ class GabcWindow(QMainWindow):
         right_dock.setWidget(self.preview_widget)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, right_dock)
         self.resizeDocks([right_dock], [self.width()/2], Qt.Orientation.Horizontal)
+
         bottom_dock = QDockWidget("Messaggi di compilazione")
         bottom_dock.setWidget(self.logger)
         self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, bottom_dock)
@@ -255,45 +242,58 @@ class GabcWindow(QMainWindow):
         self.show()
     
     def getCurrentEditor(self) -> GabcEditor:
-        return self.editor_tabs.currentWidget()
+        return (GabcEditor)(self.editor_tabs.currentWidget())
+    
+    def insertTextInCurrentEditor(self, text:str):
+        self.getCurrentEditor().insertPlainText(text)
+        self.getCurrentEditor().setFocus()
     
     def current_tab_changed(self, index):
         if index >= 0:
             self.getCurrentEditor().cursorPositionChanged.connect(self.updateLineMsg)
             filename = self.getCurrentEditor().file if self.getCurrentEditor().file else self.editor_tabs.tabText(index)
-            print(index, filename)
+            #print(index, filename)
             self.setWindowTitle(filename+"[*]")
+            self.updateWindowTitle()
             self.setWindowModified(self.getCurrentEditor().isWindowModified())
         pass
 
     # Aggiorna numero di riga e colonna
-
     def updateLineMsg(self, *args):
         pos = self.getCurrentEditor().textCursor()
         line_msg = f"Riga {pos.blockNumber()+1}, Colonna {pos.columnNumber()}"
         self.status_editor_pos.setText(line_msg)
     
     # Aggiorna titolo della finestra col nome del file
-
     def updateWindowTitle(self, *args):
-        print("updateWindowTitle")
-        print(args)
+        """ noneModified = True
+        for i in range(self.editor_tabs.count()):
+            if ((GabcEditor)(self.editor_tabs.widget(i)).document().isModified()):
+                # almeno 1 file è modificato
+                noneModified = False
+                self.editor_tabs.setTabText(i, self.editor_tabs.tabText(i)+"*")
+                pass
+        # nessun file è modificato
+        self.setWindowModified(noneModified) """
         pass
 
     # Gestione file
 
+    # TODO: filename
     def new_file(self):
         self.new_files_counter += 1
         new_tab = GabcEditor(self, file="", font=self.editor_font)
-        filename = f"nuovo{self.new_files_counter}.gabc";
+        filename = f"nuovo{self.new_files_counter}.gabc"
         self.editor_tabs.addTab(new_tab, filename)
         self.editor_tabs.setCurrentWidget(new_tab)
         #self.logger.clear()
         self.setWindowTitle(filename+"[*]")
+        new_tab.modificationChanged.connect(self.updateWindowTitle)
         self.preview_widget.clearPdf()
-        self.setWindowModified(False)
+        #self.setWindowModified(False)
         pass
 
+    # TODO: filename
     def open_file(self):
         fileName = QFileDialog.getOpenFileName(
             self,
@@ -304,21 +304,24 @@ class GabcWindow(QMainWindow):
         )
         if fileName[0] == "":
             return
-        new_tab = GabcEditor(self, file=fileName[0], font=self.editor_font)
-        self.editor_tabs.addTab(new_tab, baseName(fileName[0]))
-        self.editor_tabs.setCurrentWidget(new_tab)
-        self.preview_widget.clearPdf()
-        with open(self.getCurrentEditor().file, "r", encoding="utf-8") as file:
-            self.getCurrentEditor().insertPlainText(file.read())
-        self.getCurrentEditor().setWindowModified(False)
-        self.setWindowModified(False)
+        try:
+            with open(self.getCurrentEditor().file, "r", encoding="utf-8") as file:
+                self.getCurrentEditor().insertPlainText(file.read())
+                new_tab = GabcEditor(self, file=fileName[0], font=self.editor_font)
+                self.editor_tabs.addTab(new_tab, baseName(fileName[0]))
+                self.editor_tabs.setCurrentWidget(new_tab)
+                self.preview_widget.clearPdf()
+                #self.getCurrentEditor().setWindowModified(False)
+                #self.setWindowModified(False)
+        except Exception as e:
+            pass
         pass
 
+    # TODO: filename
     def close_file(self, index):
         self.editor_tabs.setCurrentIndex(index)
         temp_title = self.editor_tabs.tabText(index)
         if not self.getCurrentEditor().isWindowModified():
-            # TODO
             pass
         save_choice = QMessageBox.question(
             self,
@@ -334,6 +337,7 @@ class GabcWindow(QMainWindow):
         self.editor_tabs.removeTab(index)
         pass
 
+    # TODO: filename
     def save_file(self):
         if self.getCurrentEditor().file == "":
             fileName = QFileDialog.getSaveFileName(
@@ -352,6 +356,7 @@ class GabcWindow(QMainWindow):
         self.setWindowModified(False)
         pass
 
+    # TODO: filename
     def save_as_file(self):
         fileName = QFileDialog.getSaveFileName(
             self, "Salva con nome", self.settings.value("save_path"), filter="Notazione GABC (*.gabc)"
