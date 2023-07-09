@@ -3,19 +3,26 @@
 import subprocess as sp
 from src.worker import WorkerSignals #, Worker
 
+# TODO: refactoring con QProcess
+
 # Funzione per compilare l'anteprima pdf
 def compile_preview(worker_signals: WorkerSignals, gabc):
-    #print(gabc)
+    # print(gabc)
 
-    worker_signals.partial.emit(("Creo file ausiliario...", None))
+    worker_signals.partial.emit(("Creo il file sorgente GABC...", None))
     with open("./resources/anteprima.gabc", "w", encoding="utf-8") as file:
         file.write(gabc)
         pass
     #print("File ausiliario creato.")
 
+    # worker_signals.partial.emit(("Genero il file ausiliario...", None))
+    # cmdGreg = f'gregorio -S -v anteprima.gabc'
+    # with sp.Popen(cmdGreg, bufsize=1, shell=True, stdout=sp.PIPE, text=True, cwd="./resources") as sub:
+    #     for line in sub.stdout:
+    #         worker_signals.partial.emit((None, line))
+
     worker_signals.partial.emit(("Genero la struttura del documento...", None))
 
-    
     with open("./resources/anteprima.tex", "w", encoding="utf-8") as file:
         file.write(build_tex())
         pass
@@ -41,37 +48,43 @@ def compile_preview(worker_signals: WorkerSignals, gabc):
 def build_tex():
     # Raw LuaLaTeX
     doc = r"""\nonstopmode
-\documentclass[preview, border=0.2cm]{standalone}%
-\usepackage[T1]{fontenc}
-\usepackage[utf8]{inputenc}
-%\usepackage{textcomp}
-\usepackage{lastpage}
+\documentclass[preview, border=0.2cm]{standalone} % article, a4paper, border=2cm
 \usepackage[cm]{fullpage}
-\usepackage{fontspec}
-\usepackage{libertine}
-\usepackage[autocompile]{gregoriotex}
+%\usepackage[T1]{fontenc}
+%\usepackage[utf8]{inputenc}
+%\usepackage{textcomp}
+%\usepackage{libertine}
+%\usepackage{lastpage}
+%\usepackage{fontspec}
+%\usepackage[nevercompile]{gregoriotex}
+\usepackage[autocompile,allowdeprecated=false]{gregoriotex}
+\pagestyle{empty}
 \usepackage{ragged2e}
-%
+
 \begin{document}
 \normalsize
 \begin{minipage}{\textwidth}
 \gresetheadercapture{name}{section*}{}
-%
-\gresetheadercapture{name}{section*}{}
 \gresetheadercapture{annotation}{greannotation}{}
 \gresetheadercapture{date}{grecommentary}{}
 \gresetheadercapture{commentary}{grecommentary}{}
-%
+
 \gresetgregoriofont{greciliae}
-\gregorioscore{anteprima}
-%
+\gregorioscore{anteprima.gtex}
+
 \gresetheadercapture{gabc-copyright}{grecommentary}{}
-%
+
 \end{minipage}
 \end{document}"""
     return doc
 
-    """
+""" test multipagina:
+name: test;
+%%
+(c2) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz) A(fz)
+"""
+
+"""
 name: incipit;
 gabc-copyright: copyright on this gabc file;
 score-copyright: copyright on the source score;

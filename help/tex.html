@@ -1,0 +1,95 @@
+<h1>Il file TeX</h1>
+<p>
+    Questa sezione contiene indicazioni e dettagli tecnici sul file TeX che include la partitura. Non è strettamente necessaria per l'utilizzo base di GABC Editor, ma è un approfondimento per capire il suo funzionamento interno.<br>
+    <b>Questa sezione verrà modificata in versioni future di GABC Editor, soprattutto con l'aggiunta della personalizzazione del file TeX.</b>
+</p>
+
+<h2 id="tex-intro">Introduzione</h2>
+<p>
+    LaTeX è un <i>linguaggio di markup</i>, cioè un insieme di istruzioni per il computer che servono a creare documenti (in questo caso documenti di testo in formato PDF). Ci sono vari programmi nella distribuzione LaTeX per creare documenti (<code>latex</code>, <code>lualatex</code>, <code>xelatex</code>, ...); ciascuno usa una data serie di convenzioni e funzionalità per compilare i documenti.
+</p>
+<p>
+    La libreria Gregorio usa la "variante" LuaLaTeX, che permette una migliore gestione dei font al fine di disegnare correttamente le note. Queste sono infatti rese tramite caratteri di testo (glifi) opportunamente posizionati sullo spartito.
+</p>
+<p>
+    Dietro le quinte, quando l'utente avvia la compilazione vengono eseguiti questi passaggi (qui descritti in modo semplificato):
+<ol>
+    <li>GABC Editor genera, a partire da un modello preimpostato, un file TeX (estensione <code>.tex</code>), che servirà per la compilazione.</li>
+    <li>GABC Editor richiama il programma <code>lualatex</code>, incluso nella distribuzione LaTeX. Questo inizia a leggere il file TeX, al fine di compilarlo in un documento PDF.</li>
+    <li>Nel file TeX (come vedremo) è presente un comando <code>\gregorioscore</code> per includere lo spartito nel
+        documento. Quando <code>lualatex</code> incontra questo comando, richiama la libreria <code>gregoriotex</code>.
+    </li>
+    <li>La libreria compila il file GABC specificato, creando una serie di istruzioni per disegnare lo spartito.</li>
+    <li><code>lualatex</code> inserisce queste istruzioni nel documento, nel punto corrispondente al comando
+        <code>\gregorioscore</code> del file TeX.</li>
+    <li>Nel resto della compilazione <code>lualatex</code> segue le istruzioni e disegna lo spartito, scriveno il risultato in un file PDF.</li>
+    <li>Alla fine GABC Editor mostra il PDF risultante nella finestra di anteprima.</li>
+</ol>
+
+</p>
+
+<h2 id="tex-content">Contenuto del file TeX</h2>
+<p>
+    Il file TeX include la libreria Gregorio e viene compilato da riga di comando con <code>lualatex</code>. Il comando è:
+<pre>lualatex percorso/del/file/input.tex percorso/del/file/output.pdf</pre>
+</p>
+<p>
+    <b>Al momento (GABC Editor 0.1.2 - alpha) il template TeX è fisso ed è pensato per creare una "pagina" di dimensioni adattate al contenuto. Il codice è il seguente:</b>
+</p>
+<pre>
+\nonstopmode
+\documentclass[preview, border=0.2cm]{standalone}
+\usepackage[cm]{fullpage}
+\usepackage[autocompile,allowdeprecated=false]{gregoriotex}
+\pagestyle{empty}
+\usepackage{ragged2e}
+
+\begin{document}
+    \normalsize
+    \begin{minipage}{\textwidth}
+        \gresetheadercapture{name}{section*}{}
+        \gresetheadercapture{annotation}{greannotation}{}
+        \gresetheadercapture{date}{grecommentary}{}
+        \gresetheadercapture{commentary}{grecommentary}{}
+        \gresetgregoriofont{greciliae}
+        
+        \gregorioscore{anteprima.gtex}
+        
+        \gresetheadercapture{gabc-copyright}{grecommentary}{}
+    \end{minipage}
+\end{document}
+</pre>
+<p>
+    La prima riga (<code>\nonstopmode</code>) dice al compilatore TeX di non fermarsi in caso di errore e di creare in ogni caso un file di output. Gli errori vengono comunque riportati nel riquadro dei messaggi di compilazione.
+</p>
+<p>
+    La dichiarazione <code>\documentclass</code> è obbligatoria per tutti i file TeX; definisce il tipo di documento e
+    alcune opzioni di base. In questo caso <code>standalone</code> indica un documento non formattato, di dimensione
+    pari al contenuto (a differenza di una normale pagina A4, di solito resa con
+    <code>\documentclass[a4paper]{article}</code> o <code>\documentclass[a4paper]{book}</code>).
+</p>
+<p>
+    Seguono i comandi <code>\usepackage</code> per includere le librerie, tra cui Gregorio (<code>gregoriotex</code>).
+</p>
+<p>
+    Tutto il contenuto del documento è racchiuso fra <code>\begin{document}</code> e <code>\end{document}</code>, anche
+    questi obbligatori.
+</p>
+<p>
+    Dopo aver impostato la dimensione del carattere con <code>\normalsize</code>, viene creato un "ambiente"
+    <code>minipage</code> che conterrà lo spartito. All'interno vengono create alcune annotazioni con testo preso dai
+    campi dell'intestazione del file GABC (<code>\gresetheadercapture</code>) e si imposta il font da usare per i neumi
+    (<code>\gresetgregoriofont</code>).
+</p>
+<p>
+    Lo spartito vero e proprio viene dal comando <code>\gregorioscore</code>.
+</p>
+<p>
+    <b>In una versione futura di GABC Editor sarà aggiunta la possibilità di creare e modificare i template
+        <code>.tex</code> e di selezionarli per la compilazione e l'esportazione.</b>
+</p>
+<p>
+    Tutti i comandi TeX della libreria Gregorio sono documentati in <code>GregorioRef.pdf</code> (vedi <a
+        href="gabc_syntax.html#gabc-intro">questa sezione</a>).
+</p>
+<p></p>

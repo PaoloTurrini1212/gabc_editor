@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QMessageBox
 from utils import relPath
 
 def showinfo(parent):
-    VERSION = "0.1.1"
+    VERSION = "0.1.2"
     LICENSE_PATH = relPath("LICENSE.txt").replace('\\','/')
     #print(LICENSE_PATH)
     text = f""" <h1>GABC Editor</h1>

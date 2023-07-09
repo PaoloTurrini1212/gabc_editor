@@ -1,0 +1,25 @@
+* {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 1.5em;
+}
+code, pre {
+    font-family: 'Courier New', Courier, monospace;
+    color: #510863;
+}
+
+table, th, tr, td {
+    border: 1px solid #ccc;
+    border-collapse: collapse;
+    text-align: center;
+}
+td {
+    padding: 2px;
+}
+thead tr {
+    border-bottom: 2px solid #ccc;
+    font-weight: bold;
+}
+dt {
+    font-weight: bold;
+    font-style: italic;
+}

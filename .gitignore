@@ -14,5 +14,6 @@ todo.md
 resources/anteprima*
 resources/*.log
 # Unit Test separato
-test*
 anteprima*
+# altro
+gprocess

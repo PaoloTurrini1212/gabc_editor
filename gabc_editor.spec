@@ -7,7 +7,7 @@ block_cipher = None
 
 a = Analysis(
     ['gabc_editor.py'],
-    datas=[("resources","resources")],
+    datas=[("resources","resources"), ("help","help")],
     pathex=["src"],
     binaries=[],
     hiddenimports=["src"],

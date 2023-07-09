@@ -10,6 +10,7 @@ class LineNumberArea(QWidget):
     def __init__(self, editor):
         super().__init__(editor)
         self.editor = editor
+        self.setFont(editor.font())
 
     def sizeHint(self) -> QSize:
         return QSize(self.editor.lineNumberAreaWidth(), 0)
@@ -22,13 +23,15 @@ class GabcEditor(QPlainTextEdit):
     def __init__(self, parent=None, file="", font=None):
         super().__init__(parent)
         self.file = file
+        if font:
+            self.setFont(font)
+
+        # self.textChanged.connect(self.debugText)
         
         self.lineNumberArea = LineNumberArea(self)
         self.blockCountChanged.connect(self.updateLineNumberAreaWidth)
         self.updateRequest.connect(self.updateLineNumberArea)
         self.updateLineNumberAreaWidth(0)
-        if font:
-            self.setFont(font)
 
         # Evidenziatore sintassi
 
@@ -51,10 +54,10 @@ class GabcEditor(QPlainTextEdit):
         fmt_header.setForeground(QColor("#882200"))
         mappings[pattern_header] = fmt_header
 
-        pattern_header_semicolon = r"[;]+(?=[\s]*[\t\n\r])"
-        fmt_header_semicolon = QTextCharFormat()
-        fmt_header_semicolon.setForeground(QColor("#00aa00"))
-        mappings[pattern_header_semicolon] = fmt_header_semicolon
+        # pattern_header_semicolon = r"[;]+(?=[\s]*[\t\n\r])"
+        # fmt_header_semicolon = QTextCharFormat()
+        # fmt_header_semicolon.setForeground(QColor("#00aa00"))
+        # mappings[pattern_header_semicolon] = fmt_header_semicolon
 
         pattern_neume = r"(?<=\()[^\(\)]+(?=\))"
         fmt_neume = QTextCharFormat()
@@ -66,6 +69,11 @@ class GabcEditor(QPlainTextEdit):
         fmt_pitch.setForeground(QColor("#0000aa"))
         mappings[pattern_pitch] = fmt_pitch """
 
+        pattern_tag = r"\<\/?[\w\-\_]+\>"
+        fmt_tag = QTextCharFormat()
+        fmt_tag.setForeground(QColor("#338800"))
+        mappings[pattern_tag] = fmt_tag
+
         pattern_escape = r"[$]{1}.{1}"
         fmt_escape = QTextCharFormat()
         fmt_escape.setForeground(QColor("#00aaaa"))
@@ -74,6 +82,10 @@ class GabcEditor(QPlainTextEdit):
         self.highlighter = Highlighter(self)
         self.highlighter.setMappings(mappings)
         self.highlighter.setDocument(self.document())
+        pass
+
+    def isTextModified(self):
+        return self.document().isModified()
 
     def lineNumberAreaWidth(self):
         digits = 1
