@@ -64,13 +64,15 @@ class PdfPreview(QWidget):
         #self.toolbar.addSeparator()
 
         # TODO: azioni x controlli pagina
-        self.prev_page_btn = QPushButton(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowBack), "", self.toolbar)
-        self.next_page_btn = QPushButton(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowForward), "", self.toolbar)
-        self.page_indicator = QLabel("1 / 1", self.toolbar)
-        self.toolbar.addWidget(QLabel("Pagina "))
-        self.toolbar.addWidget(self.prev_page_btn)
-        self.toolbar.addWidget(self.page_indicator)
-        self.toolbar.addWidget(self.next_page_btn)
+        # self.prev_page_btn = QPushButton(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowBack), "", self.toolbar)
+        # self.prev_page_btn.clicked.connect(self.prevPage)
+        # self.next_page_btn = QPushButton(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowForward), "", self.toolbar)
+        # self.next_page_btn.clicked.connect(self.nextPage)
+        # self.page_indicator = QLabel("1 / 1", self.toolbar)
+        # self.toolbar.addWidget(QLabel("Pagina "))
+        # self.toolbar.addWidget(self.prev_page_btn)
+        # self.toolbar.addWidget(self.page_indicator)
+        # self.toolbar.addWidget(self.next_page_btn)
 
         # Layout
 
@@ -129,3 +131,12 @@ class PdfPreview(QWidget):
         self.setZoom(newZoom)
         self.zoom_selector.setCurrentIndex(newZoom)
         pass
+
+    # def prevPage(self):
+    #     if self.pdf_document.status() == QPdfDocument.Status.Ready and self.pdf_view.pageMode() == QPdfView.PageMode.SinglePage:
+    #         totalPages = self.pdf_document.pageCount()
+    #         # max(0, min(totalPages, page))
+    #     pass
+    
+    # def prevPage(self):
+    #     pass

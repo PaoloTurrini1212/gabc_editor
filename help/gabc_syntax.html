@@ -1,0 +1,686 @@
+<h1>Notazione GABC</h1>
+
+<h2 id="gabc-intro">Introduzione</h2>
+<p>
+    GABC è una semplice notazione basata esclusivamente sui caratteri ASCII, che permette all'utente di descrivere le
+    partiture di canto gregoriano. Il nome GABC fa riferimento alla notazione ABC per la musica moderna. La notazione è
+    stata sviluppata da un monaco dell'<a href="https://www.barroux.org/">Abbazia di Sainte Madeleine du Barroux</a>; è
+    stata poi perfezionata da &Eacute;lie Roux e da altri monaci della stessa abbazia.
+</p>
+<p>
+    Sul <a href="http://gregorio-project.github.io/gabc/summary-gabc.pdf">sito ufficiale del progetto Gregorio</a> si
+    trova una dettagliata descrizione della libreria Gregorio, della notazione GABC e molto altro. Questa documentazione
+    si basa in gran parte su quella del sito (è stata scritta per avere un riferimento offline).
+    <br>In particolare, da <a href="http://gregorio-project.github.io/gabc/summary-gabc.pdf">questo link</a> è possibile
+    scaricare un riassunto della notazione. Occorre già conoscere le basi del GABC, ma può servire da promemoria.
+    &Egrave; impostato per la stampa in formato A5.<br>
+    C'è anche un <a href="https://gregoriochant.org/dokuwiki/doku.php/cheat_sheet">prontuario disponibile su
+        gregoriochant.org</a>.
+</p>
+<p>
+    La documentazione completa (in inglese) di Gregorio e della sintassi GABC si può trovare nel file
+    <code>GregorioRef.pdf</code> fornito con la libreria Gregorio,
+    così come la documentazione completa per il linguaggio NABC per la notazione di San Gallo (file
+    <code>GregorioNabcRef.pdf</code>). Dovrebbero trovarsi entrambi nella cartella
+    <code>[percorso installazione TeX]/doc/luatex/gregoriotex</code>; la si può comunque individuare con l'istruzione
+    <code>kpsewhich --all GregorioRef.pdf</code> nel prompt dei comandi (cmd.exe o PowerShell per Windows,
+    shell per Linux e MacOS).
+</p>
+<p>Sebbene questa pagina riguardi la sintassi GABC, alcune impostazioni possono richiedere l'inserimento di codice
+    TeX/LaTeX nel file <code>.tex</code> che include la partitura. Tali casi sono evidenziati esplicitamente
+    (menzionando il file TeX/LaTeX).</p>
+
+<h2 id="gabc-structure">Struttura di un file GABC</h2>
+<p>
+    Un file GABC è un file di testo diviso in due sezioni, separate da una riga con <code>%%</code>:
+<ul>
+    <li>l'<i>intestazione</i> (<i>header</i>), che contiene il titolo e altre informazioni sulla partitura;</li>
+    <li>la <i>partitura</i> vera e propria.</li>
+</ul>
+Esempio minimo di file GABC:
+<pre>name: Amen;
+%%
+(c2) A(f)-men.(fg.) (::)</pre>
+</p>
+
+<h2 id="gabc-header">Intestazione</h2>
+<p>
+    In ogni riga dell'intestazione si assegna il valore di un attributo della partitura, con la sintassi:
+<pre>nome-attributo: valore attributo;</pre>
+L'intestazione ha un solo campo obbligatorio: <code>name</code> (il nome del brano). Quasi sempre corrisponde
+all'incipit del testo (<i>Veni sanct spiritus</i>) o al momento liturgico (<i>Sanctus</i>), con un eventuale numero
+romano progressivo o altri identificativi (<i>Kyrie VIII</i>).
+</p>
+<p>
+    Altri campi (opzionali) hanno un significato particolare per il compilatore:
+<ul>
+    <li>
+        <code>gabc-copyright</code>: è la notifica del copyright relativa al file GABC stesso (questo copyright
+        appartiene quindi alla persona che ha trascritto lo spartito in notazione GABC).<br>Dovrebbe essere scritta in
+        inglese e contenere un riferimento al testo dell'eventuale licenza usata (può essere un collegamento
+        ipertestuale). Esempio:
+        <pre>CC0-1.0 by Elie Roux, 2009 &lt;http://creativecommons.org/publicdomain/zero/1.0/&gt;</pre>
+    </li>
+    <li>
+        <code>score-copyright</code>: è la notifica del copyright relativa allo spartito originale dal quale è stato
+        trascritto il file GABC.<br>Per la struttura valgono le indicazioni di <code>gabc-copyright</code>.</pre>
+    </li>
+    <li>
+        <code>author</code>: l'autore del brano originale (se noto).</pre>
+    </li>
+    <li>
+        <code>language</code>: la lingua del testo del brano (solitamente il latino). Influisce soprattutto sulle regole
+        di allineamento del testo (vedi la <a href="gabc_syntax.html#gabc-text-alignment">sezione
+            sull'allineamento</a>).</pre>
+    </li>
+    <li>
+        <code>mode</code>: il modo gregoriano del brano. Può essere un numero da 1 a 8, oppure un testo qualsiasi (per
+        casi particolari).<br>Il modo viene convertito in numeri romani e posto sopra la lettera iniziale del brano. Si
+        può modificare questo comportamento in due modi: (a) definendo il campo <code>annotation</code> nell'header,
+        oppure (b) aggiungendo, nel codice LaTeX che include il file GABC, una <code>\greannotation</code> subito prima
+        del <code>\gregorioscore</code>.</pre>
+    </li>
+    <li>
+        <code>mode-modifier</code>: è un modificatore per indicare una "variante" del modo gregoriano. Può essere un
+        testo o codice LaTeX qualsiasi e viene posto subito a fianco dell'indicatore di modo. Viene ignorato se
+        <code>mode</code> non è specificato.</pre>
+    </li>
+    <li>
+        <code>mode-differentia</code>: ulteriore specifica per il modo (di solito indica la variante del tono salmodico
+        nelle antifone). Anche questa può essere un codice LaTeX qualsiasi, viene posta di fianco al
+        <code>mode-modifier</code> e viene ignorata se manca il <code>mode</code>.</pre>
+    </li>
+    <li>
+        <code>annotation</code>: indica l'intera annotazione posta sopra l'iniziale del brano; se specificata,
+        sovrascrive il modo e i suoi modificatori (ma è sovrascritta da un'eventuale <code>\greannotation</code> nel
+        file LaTeX).<br>L'intestazione può contenere fino a 2 attributi <code>annotation</code>: in tal caso il primo
+        corrisponde alla prima riga dell'annotazione (di solito un'abbreviazione del momento liturgico; es. <i>Ad
+            Magnif.</i>) e il secondo alla seconda riga (di solito l'indicazione del modo).<br>Può essere testo semplice
+        o codice LaTeX.</pre>
+    </li>
+    <li>
+        <code>staff-lines</code>: numero di righi dello spartito (dev'essere fra 2 e 5 inclusi). Se omesso, vengono
+        usati i classici 4 righi.</pre>
+    </li>
+    <li>
+        <code>oriscus-orientation</code>: assegna manualmente l'orientazione dell'<i>oriscus</i>; è usato solo in
+        modalità <code>legacy</code>. Si può tralasciare, poiché normalmente l'orientazione è determinata
+        automaticamente e si può modificare caso per caso.</pre>
+    </li>
+</ul>
+</p>
+<p>
+    Si possono aggiungere altri attributi a piacere nell'intestazione. Normalmente non vengono interpretati, ma è
+    possibile aggiungere nel codice LaTeX un'istruzione del tipo
+<pre>\gresetheadercapture{commentary}{grecommentary}{}</pre> che aggiunge un testo in corsivo, il cui contenuto è preso
+dall'attributo corrispondente (nell'esempio, <code>commentary</code>).
+</p>
+
+<h2 id="gabc-score">Partitura</h2>
+<p>La prima indicazione della partitura è la chiave. Si indica tra parentesi ed è formata da:
+<ul>
+    <li>una lettera che indica il simbolo della chiave (<code>c</code> per la chiave di Do, <code>f</code> per quella di
+        Fa);</li>
+    <li>(opzionale) una <code>b</code> per un bemolle in chiave;</li>
+    <li>
+        un numero che indica il rigo della chiave, contato a partire dal basso. Il numero dev'essere compreso (estremi
+        inclusi) fra 1 e il numero indicato nell'attributo <code>staff-lines</code> dell'intestazione (4 se non
+        specificato). Esempi: <code>(c1)</code>, <code>(fb3)</code>.<br>
+        A partire da Gregorio versione 4.1 si possono anche specificare due chiavi in contemporanea, separate da
+        <code>@</code>. Le chiavi verranno posizionate in modo da evitare collisioni. Es.: <code>(c1@c4)</code>. Per
+        determinare automaticamente la posizione del <i>custos</i> viene usata la prima chiave.
+    </li>
+</ul>
+</p>
+<p>
+    La musica vera e propria è costruita sul testo: a ciascuna sillaba viene aggiunta tra parentesi l'indicazione delle
+    altezze delle note che compongono il neuma. Es. <code>A(f)men.(f)</code>
+</p>
+<p>
+    L'altezza è indicata con una delle 13 lettere dalla <code>a</code> alla <code>m</code>, che corrispondono alle varie
+    posizioni relative ai righi: [immagine]
+</p>
+<p>
+    Inserendo più note su una sillaba, il compilatore costruisce automaticamente il neuma composito. A ciascuna nota si
+    possono applicare modificatori e spaziature per modificare la forma del neuma (ed eventualmente risolvere casi
+    ambigui), come descritto in seguito.
+</p>
+<p>
+    Gregorio usa una serie di concetti per organizzare le note:
+<dl>
+    <dt>Neuma</dt>
+    <dd>Gruppo di note cantate sulla stessa sillaba.</dd>
+    <dt>Elemento</dt>
+    <dd>Gruppo di note contigue, non separate da spazi.</dd>
+    <dt>Glifo</dt>
+    <dd>Nota o gruppo di note rappresentate da un unico segno grafico.</dd>
+</dl>
+</p>
+<p>
+    Si possono inserire le alterazioni come fossero note, inserendole nel punto in cui si deve trovare il segno di
+    alterazione e specificando l'altezza subito prima del simbolo dell'alterazione. Le
+    alterazioni disponibili sono <code>x</code> (bemolle), <code>y</code> (bequadro) e <code>#</code> (diesis, meno
+    frequente). Es.: <code>ix</code> (bemolle all'altezza del terzo rigo dal basso).
+</p>
+<p>
+    Il carattere <code>%</code> segna l'inizio di un <i>commento</i>, cioè una parte di codice ignorata dal compilatore.
+    Il commento inizia dal <code>%</code> e arriva fino a fine riga.<br>
+    I commenti non generano nulla nel risultato finale, ma servono soprattutto ad aiutare visivamente il programmatore a
+    riconoscere le varie parti del codice e la loro funzione.
+</p>
+<p>
+    Il carattere <code>$</code> ha la funzione detta di <i>escape</i>, ossia dice al compilatore di trattare il
+    carattere seguente come testo anziché interpretarlo in base alla sintassi GABC. Può essere utile ad esempio per
+    inserire parentesi o altri simboli nelle sillabe.
+</p>
+
+<h2 id="gabc-note-modifiers">Modificatori delle note</h2>
+<p><img src="img/note_shapes.png"></p>
+<table>
+    <thead>
+        <tr>
+            <td>Nome</td>
+            <td>Sintassi GABC<br>(esempio)</td>
+            <td>Note</td>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Punctum quadratum</td>
+            <td><code>g</code></td>
+            <td>Nota di base (senza modificatori).</td>
+        </tr>
+        <tr>
+            <td>Punctum inclinatum</td>
+            <td><code>G</code></td>
+            <td>Ci sono 3 simboli per il <i>punctum inclinatum</i>: ascendente, discendente e unisono. Normalmente il
+                compilatore sceglie quale usare in base alle note del neuma, ma si può forzare la scelta con
+                <code>G0</code> (discendente), <code>G1</code> (ascendente) o <code>G2</code> (unisono).
+            </td>
+        </tr>
+        <tr>
+            <td>Virga</td>
+            <td><code>gv gV</code></td>
+            <td>Normalmente è parte di un neuma composito e viene aggiunta in automatico, ma si può forzare con
+                <code>v</code> (a destra) o <code>V</code> (a sinistra). Per rimuoverla si antepone <code>@</code> al
+                gruppo di note. Esistono anche la <i>bivirga</i> (<code>gvv</code>) e la <i>trivirga</i>
+                (<code>gvvv</code>), anch'esse con la variante a sinistra.
+            </td>
+        </tr>
+        <tr>
+            <td>Stropha</td>
+            <td><code>gs gs&lt;</code></td>
+            <td>La seconda variante è liquescente. Anche per la <i>bistropha</i> e la <i>tristropha</i> ci sono le
+                notazioni abbreviate <code>gss</code> e <code>gsss</code>.</td>
+        </tr>
+        <tr>
+            <td>Quilisma</td>
+            <td><code>gw gW</code></td>
+            <td>La seconda variante (<i>quilisma quadratum</i>) modifica l'allineamento delle note.</td>
+        </tr>
+        <tr>
+            <td>Oriscus</td>
+            <td><code>go gO</code></td>
+            <td>La seconda forma è l'<i>oriscus scapus</i> (collegato alla nota precedente da un gambo).
+                L'<i>oriscus</i> è automaticamente orientato verso la successiva nota non-unisona; per modificare
+                individualmente l'orientazione si usa <i>o0</i>/<i>O0</i> (verso il basso) e <i>o1</i>/<i>O1</i> (verso
+                l'alto).</td>
+        </tr>
+        <tr>
+            <td>Initio debilis</td>
+            <td><code>-fg</code></td>
+            <td>Da aggiungere prima del neuma.</td>
+        </tr>
+        <tr>
+            <td>Liquescentia</td>
+            <td><code>g~ g&lt; g&gt;</code></td>
+            <td>Da aggiungere dopo gli altri caratteri che definiscono la singola nota. Le varianti sono (nell'ordine)
+                diminutiva, ascendente e discendente.</td>
+        </tr>
+    </tbody>
+</table>
+
+<h2 id="gabc-rythm">Segni ritmici</h2>
+<p>Sono modificatori relativi alla durata. Vanno indicati per ultimi nella definizione di una nota.</p>
+<p><img src="img/rythm_modifiers.png"></p>
+<table>
+    <thead>
+        <tr>
+            <td>Nome</td>
+            <td>Sintassi GABC<br>(esempio)</td>
+            <td>Note</td>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Punctum mora</td>
+            <td><code>g. g..</code></td>
+            <td>Raddoppia la durata. Possono esserci fino a due punti su una singola nota.</td>
+        </tr>
+        <tr>
+            <td>Ictus / Episema verticale</td>
+            <td><code>g'</code></td>
+            <td>Può essercene al massimo uno per nota. Viene posizionato in alto o in basso automaticamente; si può
+                forzare la posizione con <code>'0</code> (in basso) o <code>'1</code> (in alto).</td>
+        </tr>
+        <tr>
+            <td>Episema orizzontale</td>
+            <td><code>g_ g_f_</code></td>
+            <td>Va aggiunto <code>_</code> dopo ciascuna nota che fa parte dell'episema. Anche qui la posizione è
+                automatica, ma si può forzare con <code>_0</code> (in basso) o <code>_1</code> (in alto).</td>
+        </tr>
+    </tbody>
+</table>
+<p>
+    Per gli episemi si possono aggiungere ulteriori specifiche:
+<ul>
+    <li>
+        La notazione <code>_2</code> previene il collegamento con gli episemi adiacenti. Questo si può anche fare a
+        livello globale con <code>\gresethepisema{break}</code> nel file LaTeX; il comportamento default è
+        <code>\gresethepisema{bridge}</code>.
+    </li>
+    <li>
+        Si può rendere un episema accorciato con <code>_3</code> (allineato a sinistra sulla nota), <code>_4</code>
+        (centrato) o <code>_5</code> (allineato a destra).
+    </li>
+</ul>
+Si possono combinare fino a tre specifiche nell'episema (l'ordine non è importante): una per la posizione in alto/basso
+(0-1), una per l'unione (2) e una per l'accorciamento (3-4-5). Esempio: <code>g_502</code> (episema accorciato allineato
+a destra, sotto la nota, non legato a quelli adiacenti).
+</p>
+
+<h2 id="gabc-separation-bars">Barre e separatori</h2>
+<p><img src="img/separation_bars.png"></p>
+<p>
+    Si indicano tra parentesi, come se fossero associate a una sillaba "vuota". Esempio:
+<pre>A(f)men.(fg.) (::)</pre>
+Si possono anche associare a una "sillaba" con un simbolo (esempi: <code>*(:)</code> , <code>iij(::)</code>); il simbolo
+verrà posto sotto il separatore.
+</p>
+<p><i>Nota:</i> se c'è un segno di punteggiatura nel testo, va messo insieme alla sillaba che lo precede (e non dopo la
+    nota). Esempio: <code>e(g)jus:(h.) (::)</code> e non <code>e(g)jus(h.) : (::)</code></p>
+
+<h2 id="gabc-spacing">Spaziature</h2>
+<p>
+    Ci sono vari tipi di spazi in GABC, molti dei quali sono calcolati automaticamente dal compilatore.
+</p>
+<p>
+    La <b>cesura neumatica</b> è l'unità di base per gli spazi ed è pari allo spazio che separa i singoli elementi di
+    uno stesso neuma. Nel codice si indica con <code>/</code> (es. <code>f/h</code>).
+<p>
+    Ci sono diversi spazi derivati dalla cesura, che permettono la regolazione fine delle spaziature all'interno dei
+    neumi.
+<ul>
+    <li>
+        La <i>larghezza del glifo</i> corrisponde alla larghezza di un <i>punctum quadratum</i>; si indica con un
+        normale spazio. Viene aggiunto in automatico in un <i>climacus</i> (scala discendente) con un intervallo di
+        terza o più ampio.
+    </li>
+    <li>
+        Lo <i>spazio neumatico grande</i> è un po' più larga (circa 1 volta e mezzo) della cesura normale e si indica
+        con <code>//</code>.
+    </li>
+    <li>
+        La <i>mezza cesura</i> è metà della cesura normale e si indica con <code>/0</code>.
+    </li>
+    <li>
+        Un numero fra parentesi quadre moltiplica lo spazio della cesura per il fattore corrispondente (ad es.
+        <code>/[3]</code> è il triplo della cesura normale). Sono accettati numeri non interi (va usato il punto
+        decimale; es. <code>f/[2.5]</code>). Il fattore può anche essere negativo (es. <code>/[-1]</code>), con
+        l'effetto di sovrapporre le posizioni orizzontali delle note.
+    </li>
+    <li>
+        Si può anche impostare uno spazio nullo fra le note, ossia il bordo destro della prima nota è allineato col
+        bordo sinistro della seconda. Ci sono due modi: con un punto esclamativo <code>!</code> (es. <code>f!g</code>)
+        le note sono
+        separate, mentre col simbolo <code>@</code> (es. <code>f@g</code>) le note sono collegate da un gambo
+        verticale (<i>fusione</i>). Questo può essere utile per alcuni neumi complessi, altrimenti difficili da
+        realizzare.
+    </li>
+</ul>
+Uno spazio si può indicare come indivisibile facendolo precedere da un punto esclamativo (es. <code>!/[2]</code>).
+<h3>Risoluzione di neumi ambigui</h3>
+<p>
+    Come accennato sopra, il punto esclamativo <code>!</code> può fungere anche da <b>annullamento di legatura</b> in
+    alcuni neumi complessi (soprattutto quelli con 3 o più note ascendenti) per risolvere l'ambiguità di scrittura.
+    Tecnicamente introduce uno "spazio" di larghezza 0 fra le note.
+</p>
+<p><img src="img/ascending_notes_distinction.png"></p>
+
+<h2 id="gabc-text-alignment">Allineamento del testo</h2>
+<p>
+    Nel canto gregoriano, allineare i neumi col testo è importante per aiutare il cantore ad associarli correttamente.
+    Di base, Gregorio usa le regole descritte nella <a href="">pagina sulla scrittura del canto gregoriano</a>; queste
+    regole sono pensate per la lingua latina e si basano principalmente sull'identificazione delle vocali nelle sillabe.
+</p>
+<p>
+    Altre lingue potrebbero avere convenzioni diverse per l'allineamento, o identificare le vocali in modo diverso, o in
+    generale non dare buoni risultati con le regole del latino. Per risolvere il problema si può usare il campo
+    <code>language</code> per impostare la lingua; Gregorio cercherà le regole corrispondenti in un file di testo
+    chiamato <code>gregorio-vowels.dat</code>. Questo file usa una sintassi speciale per descrivere come vanno
+    identificate le vocali in una sillaba (l'esempio che segue è per la lingua inglese):
+<pre>alias [english] to [en];
+alias [English] to [en];
+alias [eng] to [en];
+language [en];
+vowel aàáâAÀÁÂ;
+vowel eèéêëEÈÉÊË;
+vowel iìíîIÌÍÎ;
+vowel oòóôOÒÓÔ;
+vowel uùúûUÙÚÛ;
+vowel yỳýYỲÝ;
+vowel æǽÆǼ;
+vowel œŒ;
+prefix qu Qu qU QU;
+prefix gu Gu gU GU;
+prefix y Y;
+suffix w W;
+suffix we We wE WE;
+secondary w W;</pre>
+La sintassi dei vari comandi prevede sempre il nome dell'istruzione all'inizio e un punto e virgola alla fine. Occorre
+inoltre elencare tutte le possibili combinazioni di lettere maiuscole/minuscole, accenti e segni diacritici. I comandi
+sono:
+<ul>
+    <li>
+        <code>alias</code>: nomi alternativi per la stessa lingua, che si possono usare per il campo
+        <code>language</code> dell'intestazione. Per velocizzare la ricerca è bene metterli prima dell'istruzione
+        <code>language</code> del file <code>gregorio-vowels.dat</code>.
+    </li>
+    <li>
+        <code>language</code>: la lingua selezionata. Si applica fino alla successiva istruzione <code>language</code>.
+    </li>
+    <li>
+        <code>vowel</code>: indica i caratteri da classificare come vocali, separati da spazi. Possono esserci più
+        istruzioni <code>vowel</code>.
+    </li>
+    <li>
+        <code>prefix</code>: indica sequenze di caratteri che finiscono per vocale, ma che, se in una sillaba precedono
+        una sequenza di vocali, <b>non devono</b> essere considerati parte del suono della vocale (ad es. <i>qu</i> in
+        italiano). Vanno separati da spazi. Possono esserci più istruzioni <code>prefix</code>.
+    </li>
+    <li>
+        <code>suffix</code>: indica sequenze di caratteri che non iniziano per vocale, ma che, se in una sillaba
+        compaiono dopo una sequenza di vocali, <b>devono</b> essere considerati parte del suono della vocale (ad es. in
+        inglese, la <i>w</i> di <i>low</i>). Vanno separati da spazi. Possono esserci più istruzioni
+        <code>suffix</code>.
+    </li>
+    <li>
+        <code>secondary</code>: indica sequenze di caratteri che non contengono vocali, ma che definiscono il centro di
+        allineamento della sillaba se questa non ha vocali. Non ci sono esempi in italiano, ma in alcune lingue esistono
+        "consonanti sillabiche" (come <i>l</i> e <i>r</i> nella lingua ceca). Vanno separati da spazi. Possono esserci
+        più istruzioni <code>secondary</code>.
+    </li>
+</ul>
+</p>
+<p>
+    La libreria Gregorio dovrebbe essere distribuita con un file <code>gregorio-vowels.dat</code> che definisce le
+    regole per l'inglese e per le lingue slave.
+<ul>
+    <li>Inglese: <code>en -> English / english / eng</code></li>
+    <li>Ungherese: <code>hu -> Hungarian / hungarian / hun</code></li>
+    <li>Lingue slave:
+        <code>cu -> Slavic / slavic / Church Slavic / church slavic / Church Slavonic / church slavonic / Old Church Slavonic / old church slavonic / Old Slavonic / old slavonic / Old Bulgarian / old bulgarian / chu</code>
+    </li>
+    <li>Polacco: <code>pl -> Polish / polish / pol</code> (stesse regole di <code>cu</code>)</li>
+    <li>Ceco: <code>Czech / czech / ces / cze / cs</code> (stesse regole di <code>cu</code>)</li>
+    <li>Slovacco: <code>English / english / eng / en</code> (stesse regole di <code>cu</code>)</li>
+</ul>
+Per altre lingue, o per modificare le regole predefinite, si può scrivere un file <code>gregorio-vowels.dat</code> o
+modificare quello esistente. Deve trovarsi in un'apposita cartella dell'installazione di Gregorio, che normalmente
+dovrebbe essere <code>[percorso installazione TeX]/tex/luatex/gregoriotex</code>; la si può comunque individuare con
+l'istruzione <code>kpsewhich --all gregorio-vowels.dat</code> nel prompt dei comandi (cmd.exe o PowerShell per Windows,
+shell per Linux e MacOS).
+</p>
+
+<h3>Metodi alternativi per l'allineamento</h3>
+<p>
+    Si può anche specificare individualmente l'allineamento nel file GABC, mettendo tra parentesi graffe la parte della
+    sillaba che va considerata come vocale. Ad esempio, in <code>Fi(g)gli{o}(f)</code> il neuma sarà allineato con la
+    <i>o</i> della sillaba <i>-glio</i>.
+</p>
+<p>
+    Infine, si può impostare una regola di allineamento diversa da quella basata sulle vocali tramite un'istruzione nel
+    file TeX. Gregorio fornisce 3 possibili regole:
+<ul>
+    <li><code>\gresetlyriccentering{vowel}</code> (default) allinea l'inizio del neuma con il centro della vocale;</li>
+    <li><code>\gresetlyriccentering{syllable}</code> allinea l'inizio del neuma con il centro dell'intera sillaba;</li>
+    <li><code>\gresetlyriccentering{firstletter}</code> allinea l'inizio del neuma con la prima lettera della sillaba.
+    </li>
+</ul>
+</p>
+
+<h2 id="gabc-misc">Altri comandi</h2>
+
+<h3>Fine riga e <i>custos</i></h3>
+<p>
+    Gregorio rileva automaticamente la fine della riga. Si possono inserire interruzioni di riga manuali con
+    <code>z</code>, da inserire alla fine della nota dopo la quale si vuole andare a capo (es.
+    <code>A(f)men.(fg.z)</code>). La riga sarà interrotta e giustificata (ossia il rigo va avanti senza note fino al
+    bordo della pagina). Per andare a capo senza giustificare (interrompendo quindi il rigo), si usa <code>Z</code>.
+</p>
+<p>
+    Si può prevenire un'interruzione di riga entro un gruppo di sillabe tramite un tag <code>&lt;nlba&gt;</code>
+    (<i>no-line-break area</i>). I tag di apertura e di chiusura vanno aggiunti come testo alle sillabe. Esempio:
+<pre>In(g)questo(g)testo,(g)&lt;nlba&gt;qui(g)non(g)si(g)può(g)andare(g)a(g)capo;&lt;/nlba&gt;(g)qui(g)sì(g)</pre>
+</p>
+<p>
+    Il <i>custos</i> (indicazione della prima nota della prossima riga, posta alla fine della riga corrente) è calcolato
+    automaticamente, anche in caso di interruzione manuale di riga. Si può disattivare globalmente col comando TeX
+    <code>\greseteolcustos{manual}</code>. Inoltre, nel caso delle interruzioni manuali di riga, si può decidere caso
+    per caso aggiungendo <code>+</code> (mostra il <i>custos</i>) o <code>-</code> (nascondilo) dopo il simbolo
+    <code>z</code> o <code>Z</code> di interruzione di riga. Es.: <code>men.(fg.z-)</code>.
+</p>
+<p>
+    Si può anche aggiungere un <i>custos</i> in mezzo a una riga senza ritornare a capo (ad esempio in un cambio di
+    chiave). Per farlo:
+<ul>
+    <li>
+        nel caso del cambio di chiave (in cui la nota successiva permette di calcolare automaticamente l'altezza dei
+        <i>custos</i>), si aggiunge <code>z0</code> prima del cambio (es. <code>a(g) (z0::c4) a(g)</code>).
+    </li>
+    <li>
+        negli altri casi (ad esempio alla fine del brano), si usa l'altezza della nota seguita da <code>+</code>, da
+        aggiungere alla fine della nota (dopo eventuali interruzioni di riga). Es. <code>A(g)men(g. g+)</code>.
+    </li>
+</ul><br>
+</p>
+
+<h3>Caratteri speciali</h3>
+<p>
+    Il file GABC supporta i caratteri Unicode, quindi è possibile inserirli con una scorciatoia da tastiera (Alt +
+    sequenza numerica) o con la mappa caratteri. Per i caratteri non-Unicode (ad esempio la A barrata dell'antifona) si
+    possono usare dei tag <code>&lt;sp&gt;</code> di markup (es. <code>&lt;sp&gt;A/&lt;/sp&gt;</code> per il simbolo di
+    antifona, <code>&lt;sp&gt;'ae&lt;/sp&gt;</code> per la vocale doppia <i>ae</i> accentata). In alternativa si può
+    usare un tag <code>&lt;v&gt;</code> per inserire codice TeX (es. <code>&lt;v&gt;{\ae}&lt;/v&gt;</code>; vedi anche
+    più avanti).
+</p>
+
+<h3>Lettera iniziale</h3>
+<p>
+    Gregorio rileva automaticamente l'iniziale (la prima lettera del testo) e la stampa in grande all'inizio della
+    partitura. Si può impostare il numero di righi che deve occupare in altezza tramite il comando TeX
+    <code>\gresetinitiallines{n}</code>, con un numero intero al posto di <code>n</code>. Mettendo 0, l'iniziale sarà
+    scritta come testo normale insieme al resto della sillaba.
+</p>
+<p>
+    Se la prima sillaba ha una sola lettera, Gregorio aggiunge automaticamente il trattino di separazione sotto le prime
+    note. Questo si può disattivare con <code>\gresetemptyfirstsyllablehyphen{auto}</code> nel file TeX.
+</p>
+
+<h3>Stile del testo</h3>
+<p>Non si usa spesso, ma è possibile aggiungere degli stili al testo: <code>&lt;i&gt;</code> per il corsivo
+    (<i>italic</i>), <code>&lt;b&gt;</code> per il grassetto (<i>bold</i>), <code>&lt;ul&gt;</code> per la
+    sottolineatura
+    (<i>underline</i>), <code>&lt;sc&gt;</code> per il maiuscoletto (<i>small capitals</i>) e <code>&lt;c&gt;</code> per
+    il testo colorato (il colore è preso dalla variabile TeX <code>gregoriocolor</code>; normalmente è il rosso dei
+    testi
+    liturgici). Ogni tag va ovviamente chiuso e dev'essere applicato alla singola sillaba (una scrittura come
+    <code>&lt;c&gt;A(f)men.&lt;/c&gt;(fg.)</code> darebbe errore; occorre scrivere
+    <code>&lt;c&gt;A&lt;/c&gt;(f)&lt;c&gt;men.&lt;/c&gt;(fg.)</code>).
+</p>
+
+<h3>Note cave e accenti</h3>
+<p>Sono modificatori poco comuni, ma comunque abbastanza semplici da ottenere.</p>
+<p><img src="img/other_modifiers.png"></p>
+<table>
+    <thead>
+        <tr>
+            <td>Nome</td>
+            <td>Sintassi GABC<br>(esempio)</td>
+            <td>Note</td>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Punctum cavum</td>
+            <td><code>gr hr Gr G&lt;r</code></td>
+            <td>Funziona anche con il <i>punctum inclinatum</i> e il <i>punctum inclinatum auctus</i>. Nasconde
+                l'eventuale tratto sottostante del rigo.</td>
+        </tr>
+        <tr>
+            <td>Linea punctum</td>
+            <td><code>gR gr0</code></td>
+            <td>Due varianti, piena e cava.</td>
+        </tr>
+        <tr>
+            <td>Accentus</td>
+            <td><code>gr1 gr0r2</code></td>
+            <td>Variante normale e inversa. Si può combinare col <i>punctum cavum</i> e la <i>linea punctum</i>.</td>
+        </tr>
+        <tr>
+            <td>Circulus / semi-circulus</td>
+            <td><code>gr3 gr4 gr5</code></td>
+            <td>Il <i>semi-circulus</i> ha le varianti normale e inversa. Si può combinare col <i>punctum cavum</i> e la
+                <i>linea punctum</i> (ma non con l'Iaccentus; in quel caso vale l'ultimo modificatore aggiunto alla
+                nota).
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>Testi aggiuntivi</h3>
+<p>
+    Si può aggiungere una seconda linea di testo sotto la prima (che può fungere ad es. da traduzione, o da "seconda
+    strofa"). Questa è classificata come <i>translation</i> (traduzione) da Gregorio. Si inserisce tra parentesi quadre
+    dopo ciascuna sillaba (es. <code>Al[Hal](g)le[le](h)lu[lu](h)ia.[jah.](g.)</code>).<br>
+    Si può fare in modo che una "sillaba" della traduzione si estenda per diverse sillabe del testo principale. Per
+    farlo si aggiunge la traduzione alla sillaba iniziale, mentre all'ultima si aggiunge <code>/</code> (a quelle
+    centrali non si aggiunge nulla). Es.: <code>Ky[Signore](h)ri(f)e[/](f)</code>.<br>
+    La traduzione è allineata a sinistra con la sillaba principale. Si può allineare al centre col comando TeX
+    <code>\gresettranslationcentering{center}</code>.<br>
+    Poiché la traduzione non va a capo in automatico a fine riga, può essere necessario un po' di lavoro di correzione.
+</p>
+<p>
+    Si può anche aggiungere un testo sopra il rigo. Ci sono due metodi.
+<ul>
+    <li>
+        Aggiungere dopo il testo della sillaba un tag <code>&lt;alt&gt;</code> (<i>above-lines text</i>), ad es.
+        <code>a&lt;alt&gt;esempio&lt;/alt&gt;(ghi)</code>. Il testo sarà allineato alla prima nota del neuma
+        corrispondente.
+    </li>
+    <li>
+        Aggiungere <code>[alt:testo]</code> fra le note, ad es. <code>a(gh[alt:esempio]i)</code>. Il testo sarà
+        allineato alla nota successiva; se è inserito dopo l'ultima nota, sarà allineato alla prima nota del neuma.
+    </li>
+</ul>
+</p>
+
+<h3>Segni corali</h3>
+<p>
+    Sono indicazioni inserite a fianco della nota. Si aggiungono con <code>[cs:c]</code> subito dopo la nota (si
+    sostituisca la <code>c</code> dopo i due punti con il segno corale desiderato). Es.: <code>a(fg[cs:m]i)</code>
+</p>
+
+<h3>Elisione</h3>
+<p>
+    A partire dalla versione 4.1 di Gregorio si possono inserire le <i>elisioni</i>, cioè sillabe senza un neuma
+    associato che vengono cantate rapidamente come parte di un'altra sillaba. L'elisione si racchiude in un tag
+    <code>&lt;e&gt;</code> (es. <code>cla&lt;e&gt;re&lt;/e&gt;(fh)</code>). La sillaba entro il tag di elisione è
+    ignorata nel calcolo delle vocali e le viene applicato uno stile definito dalla variabile TeX
+    <code>elisionstyle</code> (di default è in corsivo e in piccolo).
+</p>
+
+<h3>Verbatim</h3>
+<p>
+    In un blocco <i>verbatim</i> il contenuto non va interpretato come codice GABC, ma come codice TeX; quel codice
+    verrà quindi interpretato non dalla libreria Gregorio, ma dal compilatore <code>lualatex</code>. Si può aggiungere
+    sia nel testo che fra le note.<br>
+    Se un <i>verbatim</i> è aggiunto alle note, di solito non conviene usarlo per elementi visivi come scritte o
+    simboli, perché verrebbero mostrati in linea con il testo cantato (potenzialmente sovrapponendosi ad esso). Può però
+    essere utile per sovrascrivere localmente impostazioni di Gregorio, come <code>\gresetlyriccentering{vowel}</code>.
+</p>
+<p>
+    Il tag <code>&lt;v&gt;</code> inserisce un <i>verbatim</i> nel testo di una sillaba (es.
+    <code>a&lt;v&gt;(men.)&lt;/v&gt;(fg)</code> stamperà il testo <i>a(men.)</i> sotto le note).
+</p>
+<p>
+    Si può inserire un <i>verbatim</i> anche fra le note. Ci sono tre modi, tutti con sintassi simile (si sostituisca
+    <code>\codiceTeX</code> con il codice TeX desiderato):
+<ul>
+    <li><code>[nv:\codiceTeX]</code> lo aggiunge a livello di nota, senza modificare il glifo (es.
+        <code>a(fg[nv:\codiceTeX]i)</code>);
+    </li>
+    <li><code>[gv:\codiceTeX]</code> lo aggiunge a livello di glifo, interrompendo il glifo stesso ma non l'elemento;
+    </li>
+    <li><code>[ev:\codiceTeX]</code> lo aggiunge a livello di elemento (= gruppo di note contigue), interrompendo
+        l'elemento senza aggiungere spazi neumatici (che si possono comunque aggiungere a mano).</li>
+</ul>
+</p>
+<p>
+    Per comodità si possono definire fino 10 <i>macro</i>, ossia notazioni abbreviate che corrispondono a del codice
+    TeX. Le macro vanno definite nell'intestazione, con questa sintassi:
+<pre>def-m0: \codiceTeX</pre>
+Il nome della macro va da <code>m0</code> a <code>m9</code>. Sono utilizzabili nelle note, a livello di nota, glifo o
+elemento (es. <code>a(fg[nm0]i)</code>).
+</p>
+
+<h3>Polifonia</h3>
+<p>
+    Il canto gregoriano è prettamente monodico; tuttavia i primi brani polifonici furono scritti in notazione quadrata.
+    Il supporto di GABC alla polifonia è piuttosto limitato e permette di inserire semplici omofonie.
+</p>
+<p>
+    Per inserire due note in polifonia, la prima di esse va racchiusa tra parentesi graffe: <code>{fr}hr</code>. Per
+    aggiungere altre note, si alternano le note tra graffe alle note senza graffe. La prima nota deve sempre essere tra
+    graffe.
+</p>
+<p>
+    Il sistema automatico usa solo le note senza graffe per calcolare gli spazi e non riesce a rilevare le collisioni
+    fra le due "voci". La spaziatura e la posizione delle note vanno quindi aggiustate manualmente.<br>
+    Il <i>custos</i> automatico, invece, rileva la prima nota della sillaba (anche se è tra graffe).
+</p>
+
+<h3>Parentesi sopra le note</h3>
+<p>
+    Si possono creare parentesi di raggruppamento sopra le note in due modi: con larghezza <i>fissa</i> oppure
+    <i>dinamica</i>.
+</p>
+<p>
+    Per una larghezza <i>fissa</i> si aggiunge, subito dopo la nota iniziale (sinistra), un'annotazione del tipo
+    <code>[ob:1;6mm]</code> , dove:
+<ul>
+    <li>La prima lettera indica la posizione verticale: <code>o</code> = sopra la riga (<i>over</i>), <code>u</code> =
+        sotto la riga (<i>under</i>).</li>
+    <li>La seconda lettera indica la forma: <code>b</code> = parentesi tonda (<i>brace</i>), <code>cb</code> = parentesi
+        graffa (<i>curly brace</i>), <code>cba</code> = parentesi graffa con accento. Se la posizione è <code>u</code>,
+        è accettata solo la parentesi tonda <code>b</code>.</li>
+    <li>Il numero dopo i due-punti è il punto di ancoraggio orizzontale della parentesi rispetto alla nota a cui è
+        aggiunta: <code>0</code> = bordo destro della nota, <code>1</code> = bordo sinistro.</li>
+    <li>L'espressione dopo il punto-e-virgola indica la lunghezza e deve specificare l'unità di misura.</li>
+</ul>
+Esempio: <code>a(g[ocb:0;1cm])</code>
+</p>
+<p>
+    Per una larghezza <i>dinamica</i> vanno specificati sia l'ancoraggio sinistro che quello destro, con una sintassi
+    simile alla precedente ma senza il punto-e-virgola e l'indicazione di larghezza; al loro posto si aggiunge
+    <code>{</code> per l'ancoraggio sinistro e <code>}</code> per quello destro. Esempio:
+    <code>A(g[ob:1{])men.(g[ob:1}])</code>. La forma e la posizione verticale devono coincidere per la stessa parentesi,
+    mentre il punto di ancoraggio può essere diverso fra destra e sinistra.
+</p>
+<p>
+    <i>Nota</i>: Per le parentesi dinamiche occorre compilare due volte (senza modificare il file tra i due passaggi).
+    Al primo passaggio la parentesi è disegnata con la larghezza minima e vengono calcolate (e salvate in un file a
+    parte) le posizioni corrette delle parentesi; al secondo passaggio vengono recuperate le informazioni e disegnate
+    correttamente le parentesi.
+</p>
+<p></p>

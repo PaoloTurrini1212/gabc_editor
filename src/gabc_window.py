@@ -1,5 +1,5 @@
 from PySide6.QtCore import QSettings, QSize, Qt, QThreadPool
-from PySide6.QtGui import QColor, QFontDatabase, QIcon, QPainter, QPixmap
+from PySide6.QtGui import QColor, QFontDatabase, QIcon, QPainter, QPixmap, QKeySequence
 from PySide6.QtWidgets import (QApplication, QDockWidget, QFileDialog, QLabel,
                                 QMainWindow, QMessageBox, QStatusBar, QStyle,
                                 QTabWidget)
@@ -9,25 +9,32 @@ from src.latex_compile import compile_preview
 from src.logview import LogView
 from src.pdf_preview import PdfPreview
 from src.settings import SettingsDialog
+from src.help_window import HelpWindow
 from src.showinfo import showinfo
 from src.snippets import SnippetInsert
 from src.worker import Worker
-from utils import baseName, relPath  # , ROOT_PATH
+from src.export_type_selector import ExportTypeSelector, export_types
+from utils import baseName, relPath
+from shutil import copyfile
 
 
 # Applicazione principale
 class GabcWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.settings = QSettings(relPath("config.ini"), QSettings.Format.IniFormat)
+        self.prerequisites_verified = self.settings.value("prerequisites_verified")
+        if self.prerequisites_verified is None:
+            self.prerequisites_verified = 0
         self.initUI()
+    
+    # *******
+    #  SETUP
+    # *******
 
     def initUI(self):
         self.setWindowIcon(QIcon(relPath("resources/icona_greg.ico")))
-        self.resize(1000, 600)
-        self.move(100, 50) # 100, 50
-
-        self.settings = QSettings(relPath("config.ini"), QSettings.Format.IniFormat)
-
+        
         self.status_font = QFontDatabase.systemFont(
             QFontDatabase.SystemFont.GeneralFont
         )
@@ -48,27 +55,28 @@ class GabcWindow(QMainWindow):
 
         self.threadpool = QThreadPool()
 
+        # Riquadro anteprima pdf
+
+        self.preview_widget = PdfPreview(self)
+
         # Contenitore a tab per gli editor
+
+        self.newfile_count = 1
 
         self.editor_font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
         self.editor_font.setPointSize(12)
 
         self.editor_tabs = QTabWidget()
+        self.editor_tabs.setDocumentMode(True)
         self.editor_tabs.setMovable(True)
         self.editor_tabs.setTabsClosable(True)
         self.editor_tabs.currentChanged.connect(self.current_tab_changed)
         self.editor_tabs.tabCloseRequested.connect(self.close_file)
-
-        self.new_files_counter = 1
-        # first_tab = GabcEditor(self, file="", font=self.editor_font)
-        # self.editor_tabs.addTab(first_tab, f"nuovo{self.new_files_counter}.gabc")
-        # first_tab.modificationChanged.connect(self.updateWindowTitle)
-        self.setWindowTitle(f"nuovo{self.new_files_counter}.gabc[*]")
-        self.getCurrentEditor().cursorPositionChanged.connect(self.updateLineMsg)
+        self.new_file()
 
         # Logger
 
-        self.logger_font = self.editor_font
+        self.logger_font = self.editor_font.__copy__()
         self.logger_font.setPointSize(10)
 
         self.logger = LogView(self)
@@ -77,188 +85,213 @@ class GabcWindow(QMainWindow):
         """ with open("./resources/anteprima.log", "r", encoding="utf-8") as file:
             self.logger.add_log(file.read()) """
 
-        # Anteprima
-
-        self.preview_widget = PdfPreview(self)
-        #self.preview_widget.loadPdf("resources/anteprima.pdf")
-
         # Layout
 
         self.setCentralWidget(self.editor_tabs)
         right_dock = QDockWidget("Anteprima PDF")
         right_dock.setWidget(self.preview_widget)
+        right_dock.setObjectName("pdf_preview")
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, right_dock)
-        self.resizeDocks([right_dock], [self.width()/2], Qt.Orientation.Horizontal)
 
         bottom_dock = QDockWidget("Messaggi di compilazione")
         bottom_dock.setWidget(self.logger)
+        bottom_dock.setObjectName("logger")
         self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, bottom_dock)
 
         # TODO: sidebar con tool multipli
-        left_dock = QDockWidget("Strumenti")
+        left_dock = QDockWidget("Inserimento veloce")
         self.char_map = SnippetInsert(left_dock)
         self.char_map.char_selected.connect(self.insertTextInCurrentEditor)
         left_dock.setWidget(self.char_map)
+        left_dock.setObjectName("side_toolbar")
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, left_dock)
 
+        # Crea azioni, menu e barra strumenti
+        self.initMenu()
+
+        # Operazioni di caricamento
+        geometry = self.settings.value("geometry")
+        if geometry==None: geometry = self.saveGeometry()
+        self.restoreGeometry(geometry)
+        windowState = self.settings.value("windowState")
+        if windowState==None: windowState = self.saveState()
+        self.restoreState(windowState)
+        
+        self.show()
+    
+    def initMenu(self):
         # Azioni di menu e pulsanti
 
-        newfile_action = self.addAction("Nuovo", "Ctrl+N")
-        newfile_action.setIcon(
+        self.newfile_action = self.addAction("Nuovo", QKeySequence.StandardKey.New)
+        self.newfile_action.setIcon(
             self.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon)
         )
-        newfile_action.setStatusTip("Nuovo")
-        newfile_action.triggered.connect(self.new_file)
-        self.addAction(newfile_action)
+        self.newfile_action.setStatusTip("Nuovo")
+        self.newfile_action.triggered.connect(self.new_file)
 
-        openfile_action = self.addAction("Apri", "Ctrl+O")
-        openfile_action.setIcon(
+        self.openfile_action = self.addAction("Apri", QKeySequence.StandardKey.Open)
+        self.openfile_action.setIcon(
             self.style().standardIcon(QStyle.StandardPixmap.SP_DirIcon)
         )
-        openfile_action.setStatusTip("Apri")
-        openfile_action.triggered.connect(self.open_file)
+        self.openfile_action.setStatusTip("Apri")
+        self.openfile_action.triggered.connect(self.open_file)
 
-        savefile_action = self.addAction("Salva", "Ctrl+S")
-        savefile_action.setIcon(
+        self.savefile_action = self.addAction("Salva", QKeySequence.StandardKey.Save)
+        self.savefile_action.setIcon(
             self.style().standardIcon(QStyle.StandardPixmap.SP_DialogSaveButton)
         )
-        savefile_action.setStatusTip("Salva")
-        savefile_action.triggered.connect(self.save_file)
+        self.savefile_action.setStatusTip("Salva")
+        self.savefile_action.triggered.connect(self.save_file)
 
-        saveasfile_action = self.addAction("Salva con nome...", "Ctrl+Shift+S")
-        saveasfile_action.setIcon(
+        self.saveasfile_action = self.addAction("Salva con nome...", "Ctrl+Shift+S")
+        self.saveasfile_action.setIcon(
             self.style().standardIcon(QStyle.StandardPixmap.SP_DriveFDIcon)
         )
-        saveasfile_action.setStatusTip("Salva con nome...")
-        saveasfile_action.triggered.connect(self.save_as_file)
+        self.saveasfile_action.setStatusTip("Salva con nome...")
+        self.saveasfile_action.triggered.connect(self.save_as_file)
 
-        compile_action = self.addAction("Compila", "Ctrl+P")
-        compile_action.setIcon(
+        self.compile_action = self.addAction("Compila", "Ctrl+Enter")
+        self.compile_action.setIcon(
             self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowForward)
         )
-        compile_action.setStatusTip("Compila (Ctrl+P)")
-        compile_action.triggered.connect(self.start_compile_preview)
+        self.compile_action.setStatusTip("Compila (Ctrl+Enter)")
 
-        export_action = self.addAction("Esporta...")
-        export_action.setIcon(
+        self.export_action = self.addAction("Esporta...")
+        self.export_action.setIcon(
             self.style().standardIcon(QStyle.StandardPixmap.SP_FileLinkIcon)
         )
-        export_action.setStatusTip("Esporta...")
-        export_action.triggered.connect(self.export)
-        
-        settings_action = self.addAction("Impostazioni...")
-        settings_action_icon = QIcon("resources/icona_opzioni.png")
-        settings_action.setIcon(settings_action_icon)
-        settings_action.setStatusTip("Impostazioni...")
-        settings_action.triggered.connect(self.open_settings)
+        self.export_action.setStatusTip("Esporta...")
 
-        help_action = self.addAction("Aiuto")
-        help_action.setIcon(
+        if (self.prerequisites_verified == 1):
+            self.compile_action.triggered.connect(self.start_compile_preview)
+            self.export_action.triggered.connect(self.export)
+        else:
+            self.compile_action.setEnabled(False)
+            self.export_action.setEnabled(False)
+            self.compile_action.setToolTip("Compila (funzione disabilitata)")
+            self.export_action.setToolTip("Esporta (funzione disabilitata)")
+        
+        self.settings_action = self.addAction("Impostazioni...")
+        settings_action_icon = QIcon("resources/icona_opzioni.png")
+        self.settings_action.setIcon(settings_action_icon)
+        self.settings_action.setStatusTip("Impostazioni...")
+        self.settings_action.triggered.connect(self.open_settings)
+
+        self.help_action = self.addAction("Aiuto")
+        self.help_action.setIcon(
             self.style().standardIcon(QStyle.StandardPixmap.SP_MessageBoxQuestion)
         )
-        help_action.setStatusTip("Aiuto")
-        help_action.triggered.connect(self.show_help)
+        self.help_action.setStatusTip("Aiuto")
+        self.help_action.triggered.connect(self.show_help)
 
-        info_action = self.addAction("Informazioni su GabcEditor")
-        info_action.setIcon(
+        self.info_action = self.addAction("Informazioni su GabcEditor")
+        self.info_action.setIcon(
             self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogInfoView)
         )
-        info_action.setStatusTip("Informazioni su GabcEditor")
-        info_action.triggered.connect(self.show_info)
+        self.info_action.setStatusTip("Informazioni su GabcEditor")
+        self.info_action.triggered.connect(self.show_info)
 
-        exit_action = self.addAction("&Esci")  # , "Alt+F4"
-        exit_action.setIcon(
+        self.exit_action = self.addAction("&Esci")  # , "Alt+F4"
+        self.exit_action.setIcon(
             self.style().standardIcon(QStyle.StandardPixmap.SP_TitleBarCloseButton)
         )
-        exit_action.setStatusTip("Esci")
-        exit_action.triggered.connect(self.close_app)
+        self.exit_action.setStatusTip("Esci")
+        self.exit_action.triggered.connect(self.close)
 
-        undo_action = self.addAction("Annulla", "Ctrl+Z")
-        undo_action.setStatusTip("Annulla")
-        undo_action.triggered.connect(self.getCurrentEditor().undo)
+        self.undo_action = self.addAction("Annulla", "Ctrl+Z")
+        self.undo_action.setStatusTip("Annulla")
+        self.undo_action.triggered.connect(self.getCurrentEditor().undo)
 
-        redo_action = self.addAction("Ripristina", "Ctrl+Y")
-        redo_action.setStatusTip("Ripristina")
-        redo_action.triggered.connect(self.getCurrentEditor().redo)
+        self.redo_action = self.addAction("Ripristina", "Ctrl+Y")
+        self.redo_action.setStatusTip("Ripristina")
+        self.redo_action.triggered.connect(self.getCurrentEditor().redo)
 
-        selectall_action = self.addAction("Seleziona tutto", "Ctrl+A")
-        selectall_action.setStatusTip("Seleziona tutto")
-        selectall_action.triggered.connect(self.getCurrentEditor().selectAll)
+        self.selectall_action = self.addAction("Seleziona tutto", "Ctrl+A")
+        self.selectall_action.setStatusTip("Seleziona tutto")
+        self.selectall_action.triggered.connect(self.getCurrentEditor().selectAll)
 
-        cut_action = self.addAction("Taglia", "Ctrl+X")
-        cut_action.setStatusTip("Taglia")
-        cut_action.triggered.connect(self.getCurrentEditor().cut)
+        self.cut_action = self.addAction("Taglia", "Ctrl+X")
+        self.cut_action.setStatusTip("Taglia")
+        self.cut_action.triggered.connect(self.getCurrentEditor().cut)
 
-        copy_action = self.addAction("Copia", "Ctrl+C")
-        copy_action.setStatusTip("Copia")
-        copy_action.triggered.connect(self.getCurrentEditor().copy)
+        self.copy_action = self.addAction("Copia", "Ctrl+C")
+        self.copy_action.setStatusTip("Copia")
+        self.copy_action.triggered.connect(self.getCurrentEditor().copy)
 
-        paste_action = self.addAction("Incolla", "Ctrl+V")
-        paste_action.setStatusTip("Incolla")
-        paste_action.triggered.connect(self.getCurrentEditor().paste)
+        self.paste_action = self.addAction("Incolla", "Ctrl+V")
+        self.paste_action.setStatusTip("Incolla")
+        self.paste_action.triggered.connect(self.getCurrentEditor().paste)
 
         # Menu
 
         self.menu = self.menuBar()
 
         file_menu = self.menu.addMenu("&File")
-        file_menu.addAction(newfile_action)
-        file_menu.addAction(openfile_action)
-        file_menu.addAction(savefile_action)
-        file_menu.addAction(saveasfile_action)
+        file_menu.addAction(self.newfile_action)
+        file_menu.addAction(self.openfile_action)
+        file_menu.addAction(self.savefile_action)
+        file_menu.addAction(self.saveasfile_action)
         file_menu.addSeparator()
-        file_menu.addAction(export_action)
+        file_menu.addAction(self.export_action)
         file_menu.addSeparator()
-        file_menu.addAction(exit_action)
+        file_menu.addAction(self.exit_action)
 
         edit_menu = self.menu.addMenu("&Modifica")
-        edit_menu.addAction(undo_action)
-        edit_menu.addAction(redo_action)
+        edit_menu.addAction(self.undo_action)
+        edit_menu.addAction(self.redo_action)
         edit_menu.addSeparator()
-        edit_menu.addAction(selectall_action)
-        edit_menu.addAction(cut_action)
-        edit_menu.addAction(copy_action)
-        edit_menu.addAction(paste_action)
+        edit_menu.addAction(self.selectall_action)
+        edit_menu.addAction(self.cut_action)
+        edit_menu.addAction(self.copy_action)
+        edit_menu.addAction(self.paste_action)
 
         gabc_menu = self.menu.addMenu("&GABC")
-        gabc_menu.addAction(compile_action)
+        gabc_menu.addAction(self.compile_action)
 
         options_menu = self.menu.addMenu("Opzioni")
-        options_menu.addAction(settings_action)
+        options_menu.addAction(self.settings_action)
 
-        help_menu = self.menu.addMenu("&?")
-        help_menu.addAction(help_action)
-        help_menu.addAction(info_action)
+        help_menu = self.menu.addMenu("&Aiuto")
+        help_menu.addAction(self.help_action)
+        help_menu.addAction(self.info_action)
 
         # Toolbar
         self.toolbar = self.addToolBar("Strumenti")
-        self.toolbar.addAction(newfile_action)
-        self.toolbar.addAction(openfile_action)
-        self.toolbar.addAction(savefile_action)
-        self.toolbar.addAction(saveasfile_action)
+        self.toolbar.setObjectName("main_toolbar")
+        self.toolbar.addAction(self.newfile_action)
+        self.toolbar.addAction(self.openfile_action)
+        self.toolbar.addAction(self.savefile_action)
+        self.toolbar.addAction(self.saveasfile_action)
         self.toolbar.addSeparator()
-        self.toolbar.addAction(compile_action)
-        self.toolbar.addAction(export_action)
+        self.toolbar.addAction(self.compile_action)
+        self.toolbar.addAction(self.export_action)
+        # self.toolbar.addSeparator()
+        # self.toolbar.addAction(self.settings_action)
         self.toolbar.addSeparator()
-        self.toolbar.addAction(settings_action)
+        self.toolbar.addAction(self.help_action)
+        pass
 
-        self.show()
-    
+    # ********
+    #  METODI
+    # ********
+
     def getCurrentEditor(self) -> GabcEditor:
-        return (GabcEditor)(self.editor_tabs.currentWidget())
+        if self.editor_tabs.count() == 0:
+            return None
+        return self.editor_tabs.currentWidget()
     
     def insertTextInCurrentEditor(self, text:str):
         self.getCurrentEditor().insertPlainText(text)
         self.getCurrentEditor().setFocus()
+        pass
     
     def current_tab_changed(self, index):
-        if index >= 0:
-            self.getCurrentEditor().cursorPositionChanged.connect(self.updateLineMsg)
+        if index >= 0 and index < self.editor_tabs.count():
             filename = self.getCurrentEditor().file if self.getCurrentEditor().file else self.editor_tabs.tabText(index)
-            #print(index, filename)
             self.setWindowTitle(filename+"[*]")
             self.updateWindowTitle()
-            self.setWindowModified(self.getCurrentEditor().isWindowModified())
+            self.setWindowModified(self.getCurrentEditor().isTextModified())
+            self.updateLineMsg()
         pass
 
     # Aggiorna numero di riga e colonna
@@ -266,37 +299,62 @@ class GabcWindow(QMainWindow):
         pos = self.getCurrentEditor().textCursor()
         line_msg = f"Riga {pos.blockNumber()+1}, Colonna {pos.columnNumber()}"
         self.status_editor_pos.setText(line_msg)
+        pass
     
     # Aggiorna titolo della finestra col nome del file
     def updateWindowTitle(self, *args):
-        """ noneModified = True
+        modified = False
         for i in range(self.editor_tabs.count()):
-            if ((GabcEditor)(self.editor_tabs.widget(i)).document().isModified()):
+            if ((self.editor_tabs.widget(i)).isTextModified()):
                 # almeno 1 file è modificato
-                noneModified = False
-                self.editor_tabs.setTabText(i, self.editor_tabs.tabText(i)+"*")
+                modified = True
+                #self.editor_tabs.setTabText(i, self.editor_tabs.tabText(i)+"*")
                 pass
         # nessun file è modificato
-        self.setWindowModified(noneModified) """
+        self.setWindowModified(modified)
+        pass
+
+    def set_enabled_file_actions(self, enabled):
+        if not hasattr(self, "savefile_action"):
+            return
+        self.savefile_action.setEnabled(enabled)
+        self.saveasfile_action.setEnabled(enabled)
+        self.compile_action.setEnabled(enabled)
+        self.export_action.setEnabled(enabled)
+        self.undo_action.setEnabled(enabled)
+        self.redo_action.setEnabled(enabled)
+        self.selectall_action.setEnabled(enabled)
+        self.cut_action.setEnabled(enabled)
+        self.copy_action.setEnabled(enabled)
+        self.paste_action.setEnabled(enabled)
+        pass
+
+    def dialog_error(self, s):
+        dlg = QMessageBox(self)
+        dlg.setText(s)
+        dlg.setIcon(QMessageBox.Critical)
+        dlg.show()
         pass
 
     # Gestione file
 
-    # TODO: filename
-    def new_file(self):
-        self.new_files_counter += 1
-        new_tab = GabcEditor(self, file="", font=self.editor_font)
-        filename = f"nuovo{self.new_files_counter}.gabc"
-        self.editor_tabs.addTab(new_tab, filename)
-        self.editor_tabs.setCurrentWidget(new_tab)
-        #self.logger.clear()
-        self.setWindowTitle(filename+"[*]")
-        new_tab.modificationChanged.connect(self.updateWindowTitle)
+    def new_tab(self, fileName="", text="", tabName=""):
+        tab = GabcEditor(self, file=fileName, font=self.editor_font)
+        self.editor_tabs.addTab(tab, tabName)
+        self.editor_tabs.setCurrentWidget(tab)
+        tab.modificationChanged.connect(self.updateWindowTitle)
+        self.setWindowTitle(f"{tabName}[*]")
+        self.insertTextInCurrentEditor(text)
+        self.getCurrentEditor().cursorPositionChanged.connect(self.updateLineMsg)
         self.preview_widget.clearPdf()
-        #self.setWindowModified(False)
+        self.set_enabled_file_actions(True)
         pass
 
-    # TODO: filename
+    def new_file(self):
+        self.new_tab("", "", f"Nuovo {self.newfile_count}.gabc")
+        self.newfile_count += 1
+        pass
+
     def open_file(self):
         fileName = QFileDialog.getOpenFileName(
             self,
@@ -308,39 +366,36 @@ class GabcWindow(QMainWindow):
         if fileName[0] == "":
             return
         try:
-            with open(self.getCurrentEditor().file, "r", encoding="utf-8") as file:
-                self.getCurrentEditor().insertPlainText(file.read())
-                new_tab = GabcEditor(self, file=fileName[0], font=self.editor_font)
-                self.editor_tabs.addTab(new_tab, baseName(fileName[0]))
-                self.editor_tabs.setCurrentWidget(new_tab)
-                self.preview_widget.clearPdf()
-                #self.getCurrentEditor().setWindowModified(False)
-                #self.setWindowModified(False)
+            with open(fileName, "r", encoding="utf-8") as file:
+                text = file.read()
+                self.new_tab(fileName, text, fileName)
         except Exception as e:
-            pass
+            self.dialog_error(e)
         pass
 
-    # TODO: filename
     def close_file(self, index):
         self.editor_tabs.setCurrentIndex(index)
-        temp_title = self.editor_tabs.tabText(index)
-        if not self.getCurrentEditor().isWindowModified():
-            pass
-        save_choice = QMessageBox.question(
-            self,
-            "Salva",
-            f"Salvare il file {temp_title} ?",
-            (QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel),
-            QMessageBox.StandardButton.Yes
-        )
-        if save_choice == QMessageBox.StandardButton.Cancel.value or save_choice == QMessageBox.StandardButton.Close.value:
-            return
-        if save_choice == QMessageBox.StandardButton.Yes.value:
-            self.save_as_file()
+        if self.getCurrentEditor().isTextModified():
+            temp_title = self.editor_tabs.tabText(index)
+            save_choice = QMessageBox.question(
+                self,
+                "Salva",
+                f"Salvare il file {temp_title} ?",
+                (QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel),
+                QMessageBox.StandardButton.Yes
+            )
+            if save_choice == QMessageBox.StandardButton.Cancel.value or save_choice == QMessageBox.StandardButton.Close.value:
+                return False
+            if save_choice == QMessageBox.StandardButton.Yes.value:
+                saved = self.save_file()
+                if not saved:
+                    return False
         self.editor_tabs.removeTab(index)
-        pass
+        if self.editor_tabs.count() == 0:
+            self.setWindowTitle("")
+            self.set_enabled_file_actions(False)
+        return True
 
-    # TODO: filename
     def save_file(self):
         if self.getCurrentEditor().file == "":
             fileName = QFileDialog.getSaveFileName(
@@ -350,29 +405,30 @@ class GabcWindow(QMainWindow):
                 filter="Notazione GABC (*.gabc)",
             )
             if fileName[0] == "":
-                return
+                return False
             self.getCurrentEditor().file = fileName[0]
+            self.editor_tabs.setTabText(self.editor_tabs.currentIndex(), self.getCurrentEditor().file)
         content = self.getCurrentEditor().toPlainText()
         with open(self.getCurrentEditor().file, "w", encoding="utf-8") as file:
             file.write(content)
         self.getCurrentEditor().setWindowModified(False)
         self.setWindowModified(False)
-        pass
+        return True
 
-    # TODO: filename
     def save_as_file(self):
         fileName = QFileDialog.getSaveFileName(
             self, "Salva con nome", self.settings.value("save_path"), filter="Notazione GABC (*.gabc)"
         )
         if fileName[0] == "":
-            return
+            return False
         self.getCurrentEditor().file = fileName[0]
+        self.editor_tabs.setTabText(self.editor_tabs.currentIndex(), self.getCurrentEditor().file)
         content = self.getCurrentEditor().toPlainText()
         with open(self.getCurrentEditor().file, "w", encoding="utf-8") as file:
             file.write(content)
         self.getCurrentEditor().setWindowModified(False)
         self.setWindowModified(False)
-        pass
+        return True
 
     # Funzioni di compilazione LaTeX+Gregorio
 
@@ -421,14 +477,21 @@ class GabcWindow(QMainWindow):
         pass
 
     # Esporta (con opzioni)
-    def export(self, export_type):
-        #print("esporta", export_type)
-        fileName = QFileDialog.getSaveFileName(
-            self, "Salva file Gabc", self.settings.value("save_path"), filter="Immagine PNG (*.png);;Immagine JPEG (*.jpg)"
-        )
-        img = self.preview_widget.toQImage()
-        img.save(fileName[0])
+    def export(self):
+        exportDialog = ExportTypeSelector(self)
+        exportDialog.exec()
+        export_type = exportDialog.selected_format
+        filterStr = export_types[export_type]
+        fileName = QFileDialog.getSaveFileName(self, "Esporta file Gabc", self.settings.value("save_path"), filter=filterStr)
+        if (export_type == "png" or export_type == "jpg"):
+            img = self.preview_widget.toQImage()
+            img.save(fileName[0])
+        elif (export_type == "tex" or export_type == "pdf"):
+            copyfile(f"./resources/anteprima.{export_type}", fileName[0])
+            pass
         pass
+
+    # Impostazioni
 
     def open_settings(self):
         SettingsDialog(self.settings, self).exec()
@@ -437,16 +500,21 @@ class GabcWindow(QMainWindow):
     # Aiuto
 
     def show_help(self):
-        print("aiuto")
+        self.helpWindow = HelpWindow(None, self.settings)
+        self.helpWindow.show()
         pass
 
     def show_info(self):
         showinfo(self)
         pass
 
-    def close_app(self):
+    def closeEvent(self, event):
+        self.settings.setValue("geometry", self.saveGeometry())
+        self.settings.setValue("windowState", self.saveState())
         for i in range(self.editor_tabs.count()):
-            print(i, self.editor_tabs.tabText(i))
-            self.close_file(i)
-        QApplication.instance().quit()
-        pass
+            file_closed = self.close_file(i)
+            if not file_closed:
+                event.ignore()
+                return
+        #QApplication.instance().quit()
+        event.accept()

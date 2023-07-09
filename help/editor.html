@@ -1,0 +1,194 @@
+<h1>Introduzione a GABC Editor</h1>
+<h3>Versione 0.1.2 (alpha)</h3>
+
+<p>GABC Editor è un editor di testo a interfaccia grafica specializzato per i file GABC, usati dalla libreria Gregorio
+    di LaTeX per la creazione di partiture di canto gregoriano. I file GABC si possono salvare e caricare come normali
+    file di testo (con estensione <code>.gabc</code>).</p>
+<p>Questo software permette anche (previa installazione di una distribuzione LaTeX e della libreria Gregorio) di
+    compilare i file GABC includendoli in un template LaTeX predefinito e di mostrare un PDF compilato nell'apposito
+    riquadro di anteprima.</p>
+<p>Si può inoltre esportare il risultato come documento PDF, come immagine (JPG o PNG) o come file TeX.</p>
+<p>Per poter utilizzare al meglio questo editor è necessario avere installato la suite di programmi LaTeX e la libreria
+    Gregorio.</p>
+
+<h2 id="editor-main-screen">Schermata principale</h2>
+<p><img src="img/main_screen.png" alt="[img/main_screen.png]" /></p>
+<p>
+<ul>
+    <li><i>Barra dei menu</i></li>
+    <li><i>Barra degli strumenti</i></li>
+    <li><i>Finestra di inserimento veloce</i>: da qui puoi inserire velocemente caratteri speciali e pezzi di codice
+    </li>
+    <li><i>Editor GABC</i>: da qui puoi scrivere codice GABC</li>
+    <li><i>Finestra di anteprima</i>: qui puoi vedere lo spartito compilato</li>
+    <li><i>Finestra dei messaggi di compilazione</i>: qui puoi vedere se ci sono stati errori nella compilazione</li>
+    <li><i>Barra di stato</i>: mostra alcuni messaggi informativi</li>
+</ul>
+</p>
+
+<h3 id="editor-menus">Barra dei menu</h3>
+<p>Alcune funzioni si trovano anche nella barra degli strumenti; esistono anche alcune scorciatoie da tastiera.</p>
+<p>
+<ul>
+    <li>
+        <b>Menu File</b>
+        <ul>
+            <li><b>Nuovo</b> (<code>Ctrl + N</code>): crea un nuovo file GABC (si aprirà in una nuova scheda
+                nell'editor).</li>
+            <li><b>Apri</b> (<code>Ctrl + O</code>): apri un file GABC esistente (si aprirà in una nuova scheda
+                nell'editor).</li>
+            <li><b>Salva</b> (<code>Ctrl + S</code>): salva il file GABC corrente (se è un nuovo file, verrà chiesto di
+                scegliere la cartella e il nome del file).</li>
+            <li><b>Salva con nome</b> (<code>Ctrl + Shift + S</code>): salva il file corrente come nuovo file (verrà
+                sempre chiesto di scegliere la cartella e il nome del file).</li>
+            <li><b>Esporta</b>: esporta la partitura in formato <code>.pdf</code>, <code>.tex</code>, <code>.png</code>
+                o <code>.jpg</code>. <b><i>Questa funzione è disabilitata se non viene rilevata un'installazione
+                        LaTeX.</i></b></li>
+            <li><b>Esci</b>: chiudi GABC Editor.</li>
+        </ul>
+    </li>
+    <li>
+        <b>Menu Modifica</b>
+        <ul>
+            <li><b>Annulla</b> (<code>Ctrl + Z</code>): annulla l'ultima modifica al file GABC corrente.</li>
+            <li><b>Ripristina</b> (<code>Ctrl + Y</code>): ripristina l'ultima modifica annullata nel file GABC
+                corrente.</li>
+            <li><b>Seleziona tutto</b> (<code>Ctrl + A</code>): seleziona tutto il contenuto del file GABC corrente.
+            </li>
+            <li><b>Taglia</b> (<code>Ctrl + Shift + S</code>): taglia il testo selezionato dal file corrente.</li>
+            <li><b>Copia</b>: copia il testo selezionato dal file corrente.</li>
+            <li><b>Incolla</b>: incolla il testo nel file corrente.</li>
+        </ul>
+    </li>
+    <li>
+        <b>Menu GABC</b>
+        <ul>
+            <li>
+                <b>Compila</b> (<code>Ctrl + Invio</code>): Compila il file GABC corrente e mostra l'anteprima dello
+                spartito in formato PDF. La compilazione può impiegare alcuni secondi. <b><i>Questa funzione è
+                        disabilitata se non viene rilevata un'installazione LaTeX.</i></b>
+            </li>
+        </ul>
+    </li>
+    <li>
+        <b>Menu Opzioni</b>
+        <ul>
+            <li>
+                <b>Impostazioni</b>: apre una finestra di impostazioni.<br>
+                <b>Nota: In questa versione è presente solo l'impostazione per modificare la cartella di salvataggio di
+                    default per i file GABC. Nelle prossime versioni verranno aggiunte altre impostazioni, tra cui la
+                    personalizzazione dell'aspetto e l'impostazione del template TeX.</b>
+            </li>
+        </ul>
+    </li>
+    <li>
+        <b>Menu Aiuto</b>
+        <ul>
+            <li>
+                <b>Aiuto</b>: apre la guida di GABC Editor.
+            </li>
+            <li>
+                <b>Informazioni su GABC Editor</b>: mostra alcune informazioni generali sul programma (versione, autore,
+                licenza e tecnologie usate).
+            </li>
+        </ul>
+    </li>
+</ul>
+</p>
+
+<h3 id="editor-toolbar">Barra degli strumenti</h3>
+<p>Qui puoi accedere rapidamente alle funzioni più comuni. Passando col mouse sopra un pulsante viene mostrato il nome
+    dell'azione.</p>
+<p>Se si clicca col tasto destro sulla barra dei menu o su quella degli strumenti, si possono nascondere o mostrare la
+    barra degli strumenti e le varie aree della finestra principale.</p>
+
+<h3 id="editor-quick-insert">Finestra di inserimento veloce</h3>
+<p>La finestra è divisa in due sezioni. La prima, <i>Caratteri speciali</i>, contiene una mappa di simboli, soprattutto
+    quelli difficilmente ottenibili con la tastiera italiana (come l'apice, la tilde e molte lettere accentate), ma ma
+    anche alcuni caratteri comunemente usati negli spartiti gregoriani e nella liturgia.<br>
+    Cliccando su un pulsante, il codice per disegnare quel simbolo (che può consistere di più caratteri) viene inserito
+    nel testo del file GABC alla posizione corrente del cursore.</p>
+<p>Nella sezione successiva, <i>Modelli preimpostati</i>, ci sono due pulsanti che funzionano allo stesso modo dei
+    precedenti, ma inseriscono due semplici modelli GABC prefabbricati da cui partire per scrivere lo spartito. Uno
+    ("Base") include solo il campo <code>name</code> nell'intestazione (l'unico obbligatorio) e aggiunge una chiave e
+    una sillaba iniziale; l'altro ("Con header") aggiunge alcuni campi significativi all'intestazione (tra cui
+    l'indicazione di modo e alcune annotazioni di esempio).</p>
+<b>Questa sezione può essere soggetta a modifiche nelle prossime versioni di GABC Editor.</b>
+
+<h3 id="editor-gabc">Editor GABC</h3>
+<p>
+    L'editor è organizzato in schede; il nome del file aperto in una scheda è indicato nel nome della scheda stessa. Le
+    schede si possono spostare trascinandole col mouse, oppure chiudere col pulsante di chiusura. Se si chiude un file
+    con delle modifiche, verrà chiesta una conferma per il salvataggio. Creando un nuovo file o aprendone uno già
+    esistente, questo verrà aperto in una nuova scheda. All'apertura del programma si crea automaticamente una scheda
+    nuova con un file vuoto.
+</p>
+<p>
+    L'editor è un normale programma per la modifica di file di testo (simile al Blocco Note di Windows). Si può
+    selezionare, copiare, tagliare e incollare il testo (anche da e verso programmi esterni), oltre ad annullare e
+    ripristinare le modifiche al testo.
+</p>
+<p>
+    La sintassi GABC è colorata per aiutare l'occhio. Sono colorati i nomi dei campi nell'intestazione, i commenti, le
+    parentesi tonde, le note (tutto il contenuto fra parentesi tonde), i tag di apertura e chiusura (racchiusi fra segni
+    &lt; e &gt;) e i caratteri di <i>escape</i> (<code>$</code> e il carattere a cui si riferisce).
+</p>
+
+<h3 id="editor-preview">Finestra di anteprima</h3>
+<p>La visualizzazione del PDF è a pagina multipla: scorrendo in basso (con la barra di scorrimento o con la rotellina
+    del mouse) si vedono le eventuali pagine successive. In alto si trovano i controlli per l'ingrandimento.</p>
+
+<h3 id="editor-logs">Finestra dei messaggi di compilazione</h3>
+<p>
+    Dietro le quinte, il comando <i>Compila</i> crea un semplice file
+    <code>.tex</code> che include il codice GABC, poi usa il programma <code>lualatex</code> per
+    compilarlo e generare un PDF, e infine mostra il PDF nel riquadro di anteprima.
+</p>
+<p>
+    Durante la compilazione, nel riquadro <i>Messaggi di compilazione</i> compaiono in tempo reale i messaggi di
+    output di <code>lualatex</code>. La finestra si può scorrere con la barra di scorrimento o con la rotellina del
+    mouse.<br>
+    Nei messaggi sono evidenziate con colori diversi alcune
+    parole chiave ("error" in rosso, "warning" in giallo, "info" in blu, "output written in..." in
+    verde) per aiutare a identificare eventuali problemi.
+</p>
+<b>Questa funzionalità può essere soggetta a modifiche nelle prossime versioni di GABC Editor.</b>
+
+<h3 id="editor-statusbar">Barra di stato</h3>
+<p>
+    Si trova nella parte più bassa della finestra. Nella parte sinistra mostra alcuni messaggi sullo stato corrente di
+    compilazione; sulla destra mostra la posizione del cursore nel file di testo aperto in quel momento.
+</p>
+
+<h2 id="editor-usage">Utilizzo dell'editor</h2>
+<p>
+    Il cuore di GABC Editor è l'editor di testo. In effetti per scrivere un file GABC si
+    potrebbe anche utilizzare il Blocco Note o un editor di testo qualsiasi. Tuttavia GABC Editor offre alcune
+    funzionalità aggiuntive (in particolare l'evidenziatore di sintassi e una finestra di inserimento veloce) che
+    semplificano la scrittura e la successiva compilazione.
+<ol>
+    <li>Aprendo il programma si crea automaticamente un file vuoto, su cui si può già iniziare a scrivere codice GABC.
+        Si veda la sezione <a href="gabc_syntax.html">Notazione GABC</a> per la sintassi.</li>
+    <li>Per inserire caratteri speciali basta fare clic sulpulsante corrispondente nella finestra di inserimento veloce.
+    </li>
+    <li>
+        In qualunque momento si può generare un'anteprima dello spartito col pulsante <i>Compila</i> (scorciatoia: Ctrl
+        + Invio). Nel riquadro dei messaggi di compilazione inizieranno ad apparire i messaggi di <code>lualatex</code>,
+        in cui alcune parole chiave vengono colorate per mostrare a colpo d'occhio se ci sono stati errori. La
+        compilazione dura qualche secondo; al termine il risultato compare nel riquadro di anteprima. In quest'ultimo si
+        può ingrandire, rimpicciolire e scorrere il documento.
+    </li>
+    <li>
+        Quando si è soddisfatti del risultato, si può salvare il file GABC.
+    </li>
+    <li>
+        Si può inoltre esportare il file compilato come PDF o in formato immagine (PNG o JPG). Si può anche esportare il
+        file TeX che include la partitura GABC.
+    </li>
+</ol>
+</p>
+<p>
+    Per iniziare rapidamente, sono disponibili nella finestra di inserimento veloce due semplici modelli GABC
+    prefabbricati da cui partire (come detto sopra).
+</p>
+<p></p>

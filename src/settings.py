@@ -1,6 +1,10 @@
 from PySide6.QtWidgets import QDialog, QFileDialog, QDialogButtonBox, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton
 from PySide6.QtCore import QSettings
 
+# Da aggiungere:
+# - font e colori vari
+# - layout pagina LaTeX
+
 class SettingsDialog(QDialog):
     def __init__(self, settings: QSettings, parent=None):
         super().__init__(parent)
